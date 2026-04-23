@@ -11,9 +11,13 @@ dependencies:
   flutter:
     sdk: flutter
 
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
 flutter:
   shaders:
-    - shaders/dissolve.frag
     - shaders/diamond.frag
-    # - shaders/wipe.frag
-    # - shaders/glitch.frag
+    - shaders/circle.frag
+    - shaders/wipe.frag

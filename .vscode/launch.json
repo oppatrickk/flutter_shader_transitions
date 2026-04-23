@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Example (Mobile - Debug)",
+      "request": "launch",
+      "type": "dart",
+      "program": "example/lib/main.dart",
+      "flutterMode": "debug"
+    },
+    {
+      "name": "Example (Mobile - Profile)",
+      "request": "launch",
+      "type": "dart",
+      "program": "example/lib/main.dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Example (Web - Debug)",
+      "request": "launch",
+      "type": "dart",
+      "program": "example/lib/main.dart",
+      "deviceId": "chrome",
+      "flutterMode": "debug",
+      "args": ["--wasm"]
+    },
+    {
+      "name": "Example (Web - Profile)",
+      "request": "launch",
+      "type": "dart",
+      "program": "example/lib/main.dart",
+      "deviceId": "chrome",
+      "flutterMode": "profile",
+      "args": ["--wasm"]
+    }
+  ]
+}
