@@ -38,8 +38,11 @@ class ShaderPageRoute<T> extends PageRouteBuilder<T> {
           opaque: false,
           barrierColor: null,
           pageBuilder: (_, __, ___) => page,
-          transitionDuration: config.duration,
-          reverseTransitionDuration: config.reverseDuration,
+          // One duration for both directions; the cover hold (if any) lives
+          // inside this window and is clamped by ShaderMaskTransition so the
+          // wipes always get a usable share.
+          transitionDuration: config.transitionDuration,
+          reverseTransitionDuration: config.transitionDuration,
           transitionsBuilder: ShaderTransitionBuilders.create(config),
         );
 }

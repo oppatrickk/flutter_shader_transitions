@@ -323,41 +323,54 @@ class _TransitionEditor extends StatefulWidget {
 
 class _TransitionEditorState extends State<_TransitionEditor> {
   late SweepDirection _direction;
-  late double _durationMs;
+  late double _transitionDurationMs;
   late double _size;
   Color? _color;
+  double _coverDurationMs = 0.0;
+
+  // Diamond uSize is clamped to ≥ 1 px in the shader; mirror that here so
+  // the slider can't request a value the shader will silently override.
+  static const double _minSizePx = 1.0;
+  static const double _maxSizePx = 100.0;
 
   @override
   void initState() {
     super.initState();
     final defaults = _defaultsFor(widget.type);
     _direction = defaults.direction;
-    _durationMs = defaults.duration.inMilliseconds.toDouble();
+    _transitionDurationMs =
+        defaults.transitionDuration.inMilliseconds.toDouble();
     _size = defaults.size;
     _color = defaults.color;
+    _coverDurationMs = defaults.coverDuration.inMilliseconds.toDouble();
   }
 
   ShaderTransitionConfig _currentConfig() {
-    final duration = Duration(milliseconds: _durationMs.round());
+    final transitionDuration =
+        Duration(milliseconds: _transitionDurationMs.round());
+    // Cover hold is meaningful only when there's a cover color to hold on.
+    final coverDuration = _color == null
+        ? Duration.zero
+        : Duration(milliseconds: _coverDurationMs.round());
     return switch (widget.type) {
       TransitionType.diamond => ShaderTransitionConfig.diamond(
           direction: _direction,
-          duration: duration,
-          reverseDuration: duration,
+          transitionDuration: transitionDuration,
           size: _size,
           color: _color,
+          coverDuration: coverDuration,
         ),
       TransitionType.circle => ShaderTransitionConfig.circle(
-          duration: duration,
-          reverseDuration: duration,
+          transitionDuration: transitionDuration,
           color: _color,
+          coverDuration: coverDuration,
         ),
       TransitionType.wipe => ShaderTransitionConfig.wipe(
           direction: _direction,
-          duration: duration,
-          reverseDuration: duration,
+          transitionDuration: transitionDuration,
           size: _size,
           color: _color,
+          coverDuration: coverDuration,
         ),
     };
   }
@@ -433,16 +446,16 @@ class _TransitionEditorState extends State<_TransitionEditor> {
           ],
 
           Text(
-            'Duration: ${_durationMs.round()} ms',
+            'Transition duration: ${_transitionDurationMs.round()} ms',
             style: theme.textTheme.labelLarge,
           ),
           Slider(
-            value: _durationMs,
+            value: _transitionDurationMs,
             min: 100,
             max: 2000,
             divisions: 19,
-            label: '${_durationMs.round()} ms',
-            onChanged: (v) => setState(() => _durationMs = v),
+            label: '${_transitionDurationMs.round()} ms',
+            onChanged: (v) => setState(() => _transitionDurationMs = v),
           ),
 
           if (hasSize) ...[
@@ -452,9 +465,9 @@ class _TransitionEditorState extends State<_TransitionEditor> {
               style: theme.textTheme.labelLarge,
             ),
             Slider(
-              value: _size.clamp(0.0, 100.0),
-              min: 0,
-              max: 100,
+              value: _size.clamp(_minSizePx, _maxSizePx),
+              min: _minSizePx,
+              max: _maxSizePx,
               onChanged: (v) => setState(() => _size = v),
             ),
           ],
@@ -474,6 +487,29 @@ class _TransitionEditorState extends State<_TransitionEditor> {
                 ),
             ],
           ),
+
+          if (_color != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Cover duration: ${_coverDurationMs.round()} ms',
+              style: theme.textTheme.labelLarge,
+            ),
+            Slider(
+              value: _coverDurationMs.clamp(0.0, 3000.0),
+              min: 0,
+              max: 3000,
+              divisions: 30,
+              label: '${_coverDurationMs.round()} ms',
+              onChanged: (v) => setState(() => _coverDurationMs = v),
+            ),
+            Text(
+              'How long the screen stays at full cover, taken from within the '
+              'transition duration. Clamped so each wipe still gets a share.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 28),
           FilledButton.icon(

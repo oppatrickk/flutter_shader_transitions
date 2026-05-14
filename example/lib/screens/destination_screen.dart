@@ -86,7 +86,7 @@ class DestinationScreen extends StatelessWidget {
               const Divider(height: 24),
               _InfoRow(
                 label: 'Duration',
-                value: '${config.duration.inMilliseconds} ms',
+                value: '${config.transitionDuration.inMilliseconds} ms',
                 accent: accent,
               ),
               if (config.type != TransitionType.circle) ...[

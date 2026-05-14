@@ -89,8 +89,7 @@ class ShaderTransitions {
   static ShaderPageRoute<T> diamond<T>({
     required Widget page,
     SweepDirection direction = SweepDirection.topLeftToBottomRight,
-    Duration duration = const Duration(milliseconds: 800),
-    Duration reverseDuration = const Duration(milliseconds: 800),
+    Duration transitionDuration = const Duration(milliseconds: 800),
     double size = 40.0,
     RouteSettings? settings,
   }) {
@@ -99,8 +98,7 @@ class ShaderTransitions {
       config: ShaderTransitionConfig(
         type: TransitionType.diamond,
         direction: direction,
-        duration: duration,
-        reverseDuration: reverseDuration,
+        transitionDuration: transitionDuration,
         size: size,
       ),
       settings: settings,
@@ -116,16 +114,14 @@ class ShaderTransitions {
   /// ```
   static ShaderPageRoute<T> circle<T>({
     required Widget page,
-    Duration duration = const Duration(milliseconds: 700),
-    Duration reverseDuration = const Duration(milliseconds: 700),
+    Duration transitionDuration = const Duration(milliseconds: 700),
     RouteSettings? settings,
   }) {
     return ShaderPageRoute<T>(
       page: page,
       config: ShaderTransitionConfig(
         type: TransitionType.circle,
-        duration: duration,
-        reverseDuration: reverseDuration,
+        transitionDuration: transitionDuration,
       ),
       settings: settings,
     );
@@ -146,8 +142,7 @@ class ShaderTransitions {
   static ShaderPageRoute<T> wipe<T>({
     required Widget page,
     SweepDirection direction = SweepDirection.leftToRight,
-    Duration duration = const Duration(milliseconds: 600),
-    Duration reverseDuration = const Duration(milliseconds: 600),
+    Duration transitionDuration = const Duration(milliseconds: 600),
     double softness = 4.0,
     RouteSettings? settings,
   }) {
@@ -156,8 +151,7 @@ class ShaderTransitions {
       config: ShaderTransitionConfig(
         type: TransitionType.wipe,
         direction: direction,
-        duration: duration,
-        reverseDuration: reverseDuration,
+        transitionDuration: transitionDuration,
         size: softness,
       ),
       settings: settings,

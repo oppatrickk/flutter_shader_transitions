@@ -65,14 +65,18 @@ class ShaderTransitionConfig {
   /// Ignored for [TransitionType.circle].
   final SweepDirection direction;
 
-  /// Duration of the forward (push) transition.
-  final Duration duration;
-
-  /// Duration of the reverse (pop) transition.
-  final Duration reverseDuration;
+  /// Total animation time for the transition. Used unchanged for both push
+  /// (forward) and pop (reverse).
+  ///
+  /// When [color] is set, this window is split internally into
+  /// `wipe-in → cover hold → wipe-out`. [coverDuration] controls how much
+  /// of [transitionDuration] is spent at full cover; the remainder is split
+  /// evenly between the two wipes.
+  final Duration transitionDuration;
 
   /// Type-specific size parameter:
-  /// - [TransitionType.diamond]: cell size in pixels (default 40.0)
+  /// - [TransitionType.diamond]: cell size in pixels (default 40.0,
+  ///   clamped at the shader to never go below 1 px).
   /// - [TransitionType.wipe]: feather/softness width in pixels (default 4.0)
   /// - [TransitionType.circle]: unused
   final double size;
@@ -89,41 +93,55 @@ class ShaderTransitionConfig {
   /// outgoing page.
   final Color? color;
 
+  /// How long the cover [color] stays at full opacity in the middle of the
+  /// transition, sitting **inside** [transitionDuration] (not additive).
+  ///
+  /// Ignored when [color] is `null`. Internally clamped to at most 75% of
+  /// [transitionDuration] so each wipe always gets ≥ 12.5% of the timeline,
+  /// regardless of what the caller passes. That prevents the wipes from
+  /// being squashed into a near-zero window when [coverDuration] meets or
+  /// exceeds [transitionDuration].
+  ///
+  /// - `Duration.zero` (default): no hold; cover wipes in then immediately
+  ///   wipes out — a continuous cross-fade through the color.
+  /// - `transitionDuration ~/ 2`: roughly equal time on each phase.
+  final Duration coverDuration;
+
   const ShaderTransitionConfig({
     this.type = TransitionType.diamond,
     this.direction = SweepDirection.topLeftToBottomRight,
-    this.duration = const Duration(milliseconds: 800),
-    this.reverseDuration = const Duration(milliseconds: 800),
+    this.transitionDuration = const Duration(milliseconds: 800),
     this.size = 40.0,
     this.color,
+    this.coverDuration = Duration.zero,
   });
 
   /// Diamond grid wipe sweeping across the screen.
   const ShaderTransitionConfig.diamond({
     SweepDirection direction = SweepDirection.topLeftToBottomRight,
-    Duration duration = const Duration(milliseconds: 800),
-    Duration reverseDuration = const Duration(milliseconds: 800),
+    Duration transitionDuration = const Duration(milliseconds: 800),
     double size = 40.0,
     Color? color,
+    Duration coverDuration = Duration.zero,
   }) : this(
           type: TransitionType.diamond,
           direction: direction,
-          duration: duration,
-          reverseDuration: reverseDuration,
+          transitionDuration: transitionDuration,
           size: size,
           color: color,
+          coverDuration: coverDuration,
         );
 
   /// Circular iris wipe expanding from the center.
   const ShaderTransitionConfig.circle({
-    Duration duration = const Duration(milliseconds: 700),
-    Duration reverseDuration = const Duration(milliseconds: 700),
+    Duration transitionDuration = const Duration(milliseconds: 700),
     Color? color,
+    Duration coverDuration = Duration.zero,
   }) : this(
           type: TransitionType.circle,
-          duration: duration,
-          reverseDuration: reverseDuration,
+          transitionDuration: transitionDuration,
           color: color,
+          coverDuration: coverDuration,
         );
 
   /// Linear directional wipe with optional feathered edge.
@@ -132,16 +150,16 @@ class ShaderTransitionConfig {
   /// Set to 0.0 for a hard edge.
   const ShaderTransitionConfig.wipe({
     SweepDirection direction = SweepDirection.leftToRight,
-    Duration duration = const Duration(milliseconds: 600),
-    Duration reverseDuration = const Duration(milliseconds: 600),
+    Duration transitionDuration = const Duration(milliseconds: 600),
     double size = 4.0,
     Color? color,
+    Duration coverDuration = Duration.zero,
   }) : this(
           type: TransitionType.wipe,
           direction: direction,
-          duration: duration,
-          reverseDuration: reverseDuration,
+          transitionDuration: transitionDuration,
           size: size,
           color: color,
+          coverDuration: coverDuration,
         );
 }
