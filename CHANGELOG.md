@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.2
+
+- Shorten pubspec `description` to fit within pub.dev's 60–180 character window (was 218 chars and failed the "Provide a valid pubspec.yaml" check).
+
 ## 0.0.1 — Initial release
 
 - `ShaderTransitions.preload()` to compile all bundled fragment shaders once at app startup.
