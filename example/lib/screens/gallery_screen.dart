@@ -5,14 +5,14 @@ import 'destination_screen.dart';
 
 // Anything below this width (in logical pixels) gets the page-navigation flow
 // instead of the two-column master/detail layout.
-const double _wideLayoutBreakpoint = 720;
+const double wideLayoutBreakpoint = 720;
 
 // ---------------------------------------------------------------------------
 // Type catalogue
 // ---------------------------------------------------------------------------
 
-class _TypeOption {
-  const _TypeOption({
+class TypeOption {
+  const TypeOption({
     required this.type,
     required this.label,
     required this.icon,
@@ -27,22 +27,22 @@ class _TypeOption {
   final String description;
 }
 
-const List<_TypeOption> _types = [
-  _TypeOption(
+const List<TypeOption> types = [
+  TypeOption(
     type: TransitionType.diamond,
     label: 'Diamond',
     icon: Icons.diamond_outlined,
     accent: Color(0xFF7C4DFF),
     description: 'Grid of diamonds sweeps across the screen.',
   ),
-  _TypeOption(
+  TypeOption(
     type: TransitionType.circle,
     label: 'Circle iris',
     icon: Icons.radio_button_unchecked,
     accent: Color(0xFF00BCD4),
     description: 'Circular iris wipe expanding from the center.',
   ),
-  _TypeOption(
+  TypeOption(
     type: TransitionType.wipe,
     label: 'Wipe',
     icon: Icons.swipe_right_outlined,
@@ -51,14 +51,13 @@ const List<_TypeOption> _types = [
   ),
 ];
 
-_TypeOption _optionFor(TransitionType t) =>
-    _types.firstWhere((o) => o.type == t);
+TypeOption optionFor(TransitionType t) => types.firstWhere((o) => o.type == t);
 
 // ---------------------------------------------------------------------------
 // Editor presets — values used when an editor mounts for a given type.
 // ---------------------------------------------------------------------------
 
-ShaderTransitionConfig _defaultsFor(TransitionType t) => switch (t) {
+ShaderTransitionConfig defaultsFor(TransitionType t) => switch (t) {
       TransitionType.diamond => const ShaderTransitionConfig.diamond(),
       TransitionType.circle => const ShaderTransitionConfig.circle(),
       TransitionType.wipe => const ShaderTransitionConfig.wipe(),
@@ -92,7 +91,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
   void _openEditorPage(BuildContext context, TransitionType type) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (ctx) => _EditorPage(type: type),
+        builder: (ctx) => EditorPage(type: type),
       ),
     );
   }
@@ -106,7 +105,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= _wideLayoutBreakpoint;
+          final isWide = constraints.maxWidth >= wideLayoutBreakpoint;
           if (isWide) {
             return _buildWide(context);
           }
@@ -123,7 +122,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       children: [
         SizedBox(
           width: 260,
-          child: _TypeList(
+          child: TypeList(
             selected: _selectedType,
             onSelect: (t) => setState(() => _selectedType = t),
           ),
@@ -135,8 +134,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
         ),
         Expanded(
           child: _selectedType == null
-              ? const _EmptyState()
-              : _TransitionEditor(
+              ? const EmptyState()
+              : TransitionEditor(
                   // ValueKey ensures the editor remounts (and resets its state)
                   // when the user picks a different type from the list.
                   key: ValueKey(_selectedType),
@@ -149,7 +148,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
   }
 
   Widget _buildNarrow(BuildContext context) {
-    return _TypeList(
+    return TypeList(
       selected: null,
       onSelect: (t) => _openEditorPage(context, t),
     );
@@ -160,8 +159,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
 // Left-column type list (used in both layouts)
 // ---------------------------------------------------------------------------
 
-class _TypeList extends StatelessWidget {
-  const _TypeList({required this.selected, required this.onSelect});
+class TypeList extends StatelessWidget {
+  const TypeList({super.key, required this.selected, required this.onSelect});
 
   final TransitionType? selected;
   final ValueChanged<TransitionType> onSelect;
@@ -171,10 +170,10 @@ class _TypeList extends StatelessWidget {
     final theme = Theme.of(context);
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: _types.length,
+      itemCount: types.length,
       separatorBuilder: (_, __) => const SizedBox(height: 4),
       itemBuilder: (context, index) {
-        final option = _types[index];
+        final option = types[index];
         final isSelected = selected == option.type;
         return ListTile(
           leading: Container(
@@ -198,8 +197,7 @@ class _TypeList extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           selected: isSelected,
-          selectedTileColor: theme.colorScheme.primaryContainer
-              .withValues(alpha: 0.35),
+          selectedTileColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => onSelect(option.type),
         );
@@ -212,8 +210,8 @@ class _TypeList extends StatelessWidget {
 // Empty state shown in the wide layout before a type is picked
 // ---------------------------------------------------------------------------
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+class EmptyState extends StatelessWidget {
+  const EmptyState({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -248,14 +246,14 @@ class _EmptyState extends StatelessWidget {
 // Narrow-layout editor page — wraps the editor in a Scaffold + back button
 // ---------------------------------------------------------------------------
 
-class _EditorPage extends StatelessWidget {
-  const _EditorPage({required this.type});
+class EditorPage extends StatelessWidget {
+  const EditorPage({super.key, required this.type});
 
   final TransitionType type;
 
   @override
   Widget build(BuildContext context) {
-    final option = _optionFor(type);
+    final option = optionFor(type);
     return Scaffold(
       appBar: AppBar(
         title: Text(option.label),
@@ -263,7 +261,7 @@ class _EditorPage extends StatelessWidget {
         backgroundColor: option.accent,
         foregroundColor: Colors.white,
       ),
-      body: _TransitionEditor(
+      body: TransitionEditor(
         type: type,
         onTest: (config) {
           Navigator.of(context).push(
@@ -282,21 +280,21 @@ class _EditorPage extends StatelessWidget {
 // Editor — shared by both layouts
 // ---------------------------------------------------------------------------
 
-class _ColorChoice {
-  const _ColorChoice(this.label, this.color);
+class ColorChoice {
+  const ColorChoice(this.label, this.color);
   final String label;
   final Color? color;
 }
 
-const List<_ColorChoice> _colorChoices = [
-  _ColorChoice('None', null),
-  _ColorChoice('Black', Color(0xFF000000)),
-  _ColorChoice('White', Color(0xFFFFFFFF)),
-  _ColorChoice('Indigo', Color(0xFF1A237E)),
-  _ColorChoice('Red', Color(0xFFC62828)),
+const List<ColorChoice> colorChoices = [
+  ColorChoice('None', null),
+  ColorChoice('Black', Color(0xFF000000)),
+  ColorChoice('White', Color(0xFFFFFFFF)),
+  ColorChoice('Indigo', Color(0xFF1A237E)),
+  ColorChoice('Red', Color(0xFFC62828)),
 ];
 
-String _directionLabel(SweepDirection d) => switch (d) {
+String directionLabel(SweepDirection d) => switch (d) {
       SweepDirection.topLeftToBottomRight => '↘ Top-left → Bottom-right',
       SweepDirection.bottomRightToTopLeft => '↖ Bottom-right → Top-left',
       SweepDirection.leftToRight => '→ Left → Right',
@@ -307,8 +305,8 @@ String _directionLabel(SweepDirection d) => switch (d) {
       SweepDirection.bottomLeftToTopRight => '↗ Bottom-left → Top-right',
     };
 
-class _TransitionEditor extends StatefulWidget {
-  const _TransitionEditor({
+class TransitionEditor extends StatefulWidget {
+  const TransitionEditor({
     super.key,
     required this.type,
     required this.onTest,
@@ -318,10 +316,10 @@ class _TransitionEditor extends StatefulWidget {
   final ValueChanged<ShaderTransitionConfig> onTest;
 
   @override
-  State<_TransitionEditor> createState() => _TransitionEditorState();
+  State<TransitionEditor> createState() => _TransitionEditorState();
 }
 
-class _TransitionEditorState extends State<_TransitionEditor> {
+class _TransitionEditorState extends State<TransitionEditor> {
   late SweepDirection _direction;
   late double _transitionDurationMs;
   late double _size;
@@ -336,22 +334,18 @@ class _TransitionEditorState extends State<_TransitionEditor> {
   @override
   void initState() {
     super.initState();
-    final defaults = _defaultsFor(widget.type);
+    final defaults = defaultsFor(widget.type);
     _direction = defaults.direction;
-    _transitionDurationMs =
-        defaults.transitionDuration.inMilliseconds.toDouble();
+    _transitionDurationMs = defaults.transitionDuration.inMilliseconds.toDouble();
     _size = defaults.size;
     _color = defaults.color;
     _coverDurationMs = defaults.coverDuration.inMilliseconds.toDouble();
   }
 
   ShaderTransitionConfig _currentConfig() {
-    final transitionDuration =
-        Duration(milliseconds: _transitionDurationMs.round());
+    final transitionDuration = Duration(milliseconds: _transitionDurationMs.round());
     // Cover hold is meaningful only when there's a cover color to hold on.
-    final coverDuration = _color == null
-        ? Duration.zero
-        : Duration(milliseconds: _coverDurationMs.round());
+    final coverDuration = _color == null ? Duration.zero : Duration(milliseconds: _coverDurationMs.round());
     return switch (widget.type) {
       TransitionType.diamond => ShaderTransitionConfig.diamond(
           direction: _direction,
@@ -378,11 +372,10 @@ class _TransitionEditorState extends State<_TransitionEditor> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final option = _optionFor(widget.type);
+    final option = optionFor(widget.type);
     final hasDirection = widget.type != TransitionType.circle;
     final hasSize = widget.type != TransitionType.circle;
-    final sizeLabel =
-        widget.type == TransitionType.diamond ? 'Cell size' : 'Feather';
+    final sizeLabel = widget.type == TransitionType.diamond ? 'Cell size' : 'Feather';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -435,7 +428,7 @@ class _TransitionEditorState extends State<_TransitionEditor> {
               items: SweepDirection.values
                   .map((d) => DropdownMenuItem(
                         value: d,
-                        child: Text(_directionLabel(d)),
+                        child: Text(directionLabel(d)),
                       ))
                   .toList(),
               onChanged: (v) {
@@ -479,8 +472,8 @@ class _TransitionEditorState extends State<_TransitionEditor> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (final choice in _colorChoices)
-                _ColorSwatch(
+              for (final choice in colorChoices)
+                ColorChip(
                   choice: choice,
                   selected: _color == choice.color,
                   onTap: () => setState(() => _color = choice.color),
@@ -527,23 +520,22 @@ class _TransitionEditorState extends State<_TransitionEditor> {
   }
 }
 
-class _ColorSwatch extends StatelessWidget {
-  const _ColorSwatch({
+class ColorChip extends StatelessWidget {
+  const ColorChip({
+    super.key,
     required this.choice,
     required this.selected,
     required this.onTap,
   });
 
-  final _ColorChoice choice;
+  final ColorChoice choice;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final borderColor = selected
-        ? theme.colorScheme.primary
-        : theme.colorScheme.outlineVariant;
+    final borderColor = selected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant;
     final fill = choice.color;
 
     return InkWell(

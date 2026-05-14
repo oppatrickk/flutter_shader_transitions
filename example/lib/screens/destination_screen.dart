@@ -74,9 +74,9 @@ class DestinationScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Transition details
-              _InfoRow(label: 'Type', value: _typeName, accent: accent),
+              InfoRow(label: 'Type', value: _typeName, accent: accent),
               const Divider(height: 24),
-              _InfoRow(
+              InfoRow(
                 label: 'Direction',
                 value: config.type == TransitionType.circle
                     ? 'Center outward'
@@ -84,14 +84,14 @@ class DestinationScreen extends StatelessWidget {
                 accent: accent,
               ),
               const Divider(height: 24),
-              _InfoRow(
+              InfoRow(
                 label: 'Duration',
                 value: '${config.transitionDuration.inMilliseconds} ms',
                 accent: accent,
               ),
               if (config.type != TransitionType.circle) ...[
                 const Divider(height: 24),
-                _InfoRow(
+                InfoRow(
                   label: config.type == TransitionType.diamond
                       ? 'Cell size'
                       : 'Feather',
@@ -136,8 +136,9 @@ class DestinationScreen extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
+class InfoRow extends StatelessWidget {
+  const InfoRow({
+    super.key,
     required this.label,
     required this.value,
     required this.accent,
