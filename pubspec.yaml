@@ -1,7 +1,19 @@
 name: shader_transitions
-description: GPU-accelerated shader-based transitions for Flutter.
-version: 0.1.0
-# homepage: https://github.com/yourname/shader_transitions
+description: >-
+  GPU-accelerated, shader-based page transitions for Flutter — diamond grid,
+  circle iris, and linear wipe with eight sweep directions, optional cover
+  color, and a configurable hold for cinematic fade-through transitions.
+version: 0.0.1
+homepage: https://johnpatrickprieto.com
+repository: https://github.com/oppatrickk/flutter_shader_transitions
+issue_tracker: https://github.com/oppatrickk/flutter_shader_transitions/issues
+
+topics:
+  - transitions
+  - shaders
+  - animation
+  - navigation
+  - ui
 
 environment:
   sdk: ">=3.2.0 <4.0.0"
