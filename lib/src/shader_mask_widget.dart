@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
 
+import 'shader_registry.dart';
 import 'transition_config.dart';
 
 /// Applies a shader as an alpha mask to [child] using [BlendMode.dstIn].
@@ -34,18 +35,13 @@ import 'transition_config.dart';
 /// index 4 — uDirection.x : float  (normalized sweep direction x)
 /// index 5 — uDirection.y : float  (normalized sweep direction y)
 /// ```
-class ShaderMaskTransition extends StatelessWidget {
+class ShaderMaskTransition extends StatefulWidget {
   const ShaderMaskTransition({
     super.key,
-    required this.shader,
     required this.animation,
     required this.config,
     required this.child,
   });
-
-  /// The [ui.FragmentShader] instance to use. Must have been created from a
-  /// preloaded [ui.FragmentProgram] and must NOT be shared between routes.
-  final ui.FragmentShader shader;
 
   /// The route animation (0.0 → 1.0 on push, 1.0 → 0.0 on pop).
   final Animation<double> animation;
@@ -57,32 +53,53 @@ class ShaderMaskTransition extends StatelessWidget {
   final Widget child;
 
   @override
+  State<ShaderMaskTransition> createState() => _ShaderMaskTransitionState();
+}
+
+class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
+  ui.FragmentShader? _shader;
+
+  @override
+  void initState() {
+    super.initState();
+    _shader = ShaderRegistry.instance.createShader(widget.config.type.name);
+  }
+
+  @override
+  void dispose() {
+    _shader?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_shader == null) {
+      return FadeTransition(opacity: widget.animation, child: widget.child);
+    }
     return AnimatedBuilder(
-      animation: animation,
-      // Pass child through so Flutter does not rebuild it on every frame.
+      animation: widget.animation,
       builder: (context, child) {
         return ShaderMask(
           blendMode: BlendMode.dstIn,
           shaderCallback: (Rect bounds) {
-            final (dx, dy) = config.direction.vector;
+            final (dx, dy) = widget.config.direction.vector;
             final len = math.sqrt(dx * dx + dy * dy);
             final ndx = len > 0 ? dx / len : 0.0;
             final ndy = len > 0 ? dy / len : 0.0;
 
-            shader.setFloat(0, animation.value); // uProgress
-            shader.setFloat(1, bounds.width); // uResolution.x
-            shader.setFloat(2, bounds.height); // uResolution.y
-            shader.setFloat(3, config.size); // uSize
-            shader.setFloat(4, ndx); // uDirection.x
-            shader.setFloat(5, ndy); // uDirection.y
+            _shader!.setFloat(0, widget.animation.value); // uProgress
+            _shader!.setFloat(1, bounds.width); // uResolution.x
+            _shader!.setFloat(2, bounds.height); // uResolution.y
+            _shader!.setFloat(3, widget.config.size); // uSize
+            _shader!.setFloat(4, ndx); // uDirection.x
+            _shader!.setFloat(5, ndy); // uDirection.y
 
-            return shader;
+            return _shader!;
           },
           child: child,
         );
       },
-      child: child,
+      child: widget.child,
     );
   }
 }

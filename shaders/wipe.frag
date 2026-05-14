@@ -17,10 +17,17 @@ out vec4 fragColor;
 
 void main() {
     vec2 uv = FlutterFragCoord().xy / uResolution;
+    vec2 d = normalize(uDirection);
 
-    // Project the screen UV onto the wipe direction to get a scalar position (0..1)
-    // along the wipe axis. Pixels at the start of the direction reveal first.
-    float pos = dot(uv, normalize(uDirection));
+    // Project UV onto the wipe direction. The raw range of dot(uv, d) over
+    // uv ∈ [0,1]² depends on the signs of d.x and d.y — for negative-axis
+    // directions (e.g. rightToLeft) it spans [-1,0], and for diagonals it
+    // spans [0, √2]. Remap to [0,1] so pos=0 is always the start corner of
+    // the sweep and pos=1 is the end corner, regardless of direction.
+    float raw = dot(uv, d);
+    float minPos = min(d.x, 0.0) + min(d.y, 0.0);
+    float maxPos = max(d.x, 0.0) + max(d.y, 0.0);
+    float pos = (raw - minPos) / (maxPos - minPos);
 
     // Convert the pixel-space feather width into normalized UV space.
     // A minimum of 0.001 prevents division issues when uSize=0 (hard edge).
@@ -28,7 +35,7 @@ void main() {
 
     // alpha=1 where pos < uProgress (already revealed), 0 where pos > uProgress (not yet revealed).
     // smoothstep creates a soft feathered edge of width 2*feather around the wipe boundary.
-    float alpha = smoothstep(uProgress - feather, uProgress + feather, pos);
+    float alpha = 1.0 - smoothstep(uProgress - feather, uProgress + feather, pos);
 
     // Output only alpha — RGB is irrelevant when used with ShaderMask(blendMode: BlendMode.dstIn).
     fragColor = vec4(1.0, 1.0, 1.0, alpha);

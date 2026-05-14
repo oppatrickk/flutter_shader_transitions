@@ -1,9 +1,6 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 
 import 'shader_mask_widget.dart';
-import 'shader_registry.dart';
 import 'transition_config.dart';
 
 /// Factory for creating [RouteTransitionsBuilder] closures backed by a
@@ -54,28 +51,20 @@ class ShaderTransitionBuilders {
 
   /// Creates a [RouteTransitionsBuilder] closure for the given [config].
   ///
-  /// The [ui.FragmentShader] is created once when this method is called
-  /// (i.e., at route construction time) and is reused for every animation
-  /// frame — uniform values are updated in-place rather than reallocating.
-  ///
-  /// If [ShaderRegistry] has not been preloaded, or if shader loading failed,
-  /// the returned builder falls back to a [FadeTransition].
+  /// The [ShaderMaskTransition] widget manages the [FragmentShader] lifecycle
+  /// internally — creating it on mount and disposing it on unmount. This
+  /// avoids dangling shader references on platforms (e.g. Flutter web/WASM)
+  /// where native shader backing can be finalized independently of the Dart
+  /// wrapper. Falls back to [FadeTransition] if the shader program was not
+  /// preloaded.
   static RouteTransitionsBuilder create(ShaderTransitionConfig config) {
-    final ui.FragmentShader? shader =
-        ShaderRegistry.instance.createShader(config.type.name);
-
     return (
       BuildContext context,
       Animation<double> animation,
       Animation<double> secondaryAnimation,
       Widget child,
     ) {
-      if (shader == null) {
-        // Graceful fallback when shaders are unavailable.
-        return FadeTransition(opacity: animation, child: child);
-      }
       return ShaderMaskTransition(
-        shader: shader,
         animation: animation,
         config: config,
         child: child,
