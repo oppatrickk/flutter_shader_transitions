@@ -76,7 +76,7 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
     if (_shader == null) {
       return FadeTransition(opacity: widget.animation, child: widget.child);
     }
-    return AnimatedBuilder(
+    final Widget masked = AnimatedBuilder(
       animation: widget.animation,
       builder: (context, child) {
         return ShaderMask(
@@ -100,6 +100,13 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
         );
       },
       child: widget.child,
+    );
+
+    final Color? color = widget.config.color;
+    if (color == null) return masked;
+    return Stack(
+      fit: StackFit.expand,
+      children: [ColoredBox(color: color), masked],
     );
   }
 }

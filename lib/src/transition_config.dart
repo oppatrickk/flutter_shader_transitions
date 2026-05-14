@@ -1,3 +1,5 @@
+import 'dart:ui' show Color;
+
 /// The type of shader-based transition to apply.
 enum TransitionType {
   /// A grid of diamond shapes that reveal the incoming page in a sweeping wave.
@@ -51,6 +53,9 @@ extension SweepDirectionVector on SweepDirection {
 /// ShaderTransitionConfig.circle()
 /// ShaderTransitionConfig.wipe(direction: SweepDirection.leftToRight)
 /// ```
+///
+/// Pass [color] to fill the un-revealed area with a flat color (e.g. black)
+/// instead of letting the outgoing page show through.
 class ShaderTransitionConfig {
   /// The type of shader transition to use.
   final TransitionType type;
@@ -72,12 +77,25 @@ class ShaderTransitionConfig {
   /// - [TransitionType.circle]: unused
   final double size;
 
+  /// Optional fill color for the un-revealed region of the transition.
+  ///
+  /// When `null` (default), the un-revealed area is transparent and the
+  /// outgoing page shows through underneath — a classic mask reveal.
+  ///
+  /// When non-null, a flat color is rendered beneath the masked incoming
+  /// page, so the wipe peels the color away to expose the new page. Useful
+  /// for cinematic "fade-to-black" style transitions or brand-colored wipes.
+  /// Semi-transparent colors are allowed and will partially blend with the
+  /// outgoing page.
+  final Color? color;
+
   const ShaderTransitionConfig({
     this.type = TransitionType.diamond,
     this.direction = SweepDirection.topLeftToBottomRight,
     this.duration = const Duration(milliseconds: 800),
     this.reverseDuration = const Duration(milliseconds: 800),
     this.size = 40.0,
+    this.color,
   });
 
   /// Diamond grid wipe sweeping across the screen.
@@ -86,22 +104,26 @@ class ShaderTransitionConfig {
     Duration duration = const Duration(milliseconds: 800),
     Duration reverseDuration = const Duration(milliseconds: 800),
     double size = 40.0,
+    Color? color,
   }) : this(
           type: TransitionType.diamond,
           direction: direction,
           duration: duration,
           reverseDuration: reverseDuration,
           size: size,
+          color: color,
         );
 
   /// Circular iris wipe expanding from the center.
   const ShaderTransitionConfig.circle({
     Duration duration = const Duration(milliseconds: 700),
     Duration reverseDuration = const Duration(milliseconds: 700),
+    Color? color,
   }) : this(
           type: TransitionType.circle,
           duration: duration,
           reverseDuration: reverseDuration,
+          color: color,
         );
 
   /// Linear directional wipe with optional feathered edge.
@@ -113,11 +135,13 @@ class ShaderTransitionConfig {
     Duration duration = const Duration(milliseconds: 600),
     Duration reverseDuration = const Duration(milliseconds: 600),
     double size = 4.0,
+    Color? color,
   }) : this(
           type: TransitionType.wipe,
           direction: direction,
           duration: duration,
           reverseDuration: reverseDuration,
           size: size,
+          color: color,
         );
 }
