@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'shader_transition_builders.dart';
 import 'transition_config.dart';
 
-/// A [PageRouteBuilder] that applies a GPU fragment shader as the transition
-/// between the outgoing and incoming routes.
+/// A [PageRouteBuilder] that applies a [ShaderTransition] between the
+/// outgoing and incoming routes.
 ///
 /// ## Usage
 /// ```dart
 /// Navigator.of(context).push(
 ///   ShaderPageRoute(
 ///     page: const NextPage(),
-///     config: ShaderTransitionConfig.diamond(
+///     transition: const DiamondTransition(
 ///       direction: SweepDirection.leftToRight,
 ///     ),
 ///   ),
@@ -20,29 +20,28 @@ import 'transition_config.dart';
 ///
 /// ## Why `opaque: false`
 ///
-/// This route sets `opaque: false` so that Flutter's [Navigator] continues
-/// rendering the outgoing route underneath. Without this, the outgoing page
-/// disappears immediately (black flash) because Flutter assumes an opaque
-/// top route covers the entire screen and skips rendering routes below it.
-///
-/// With `opaque: false`, wherever the shader outputs `alpha == 0`, the
-/// incoming page is transparent and the outgoing page shows through naturally.
+/// This route sets `opaque: false` so Flutter keeps rendering the outgoing
+/// route underneath. Without it the outgoing page disappears immediately
+/// (black flash) because Flutter skips routes below an opaque top route.
+/// Wherever the shader outputs `alpha == 0`, the incoming page is
+/// transparent and the outgoing page (or [TransitionCover] color) shows.
 class ShaderPageRoute<T> extends PageRouteBuilder<T> {
   ShaderPageRoute({
     required Widget page,
-    ShaderTransitionConfig config = const ShaderTransitionConfig(),
+    this.transition = const DiamondTransition(),
     super.settings,
   }) : super(
-          // CRITICAL: allows Flutter to keep rendering the outgoing route
-          // underneath this one, so the shader mask reveals it correctly.
+          // CRITICAL: keep the outgoing route rendered underneath.
           opaque: false,
           barrierColor: null,
           pageBuilder: (_, __, ___) => page,
-          // One duration for both directions; the cover hold (if any) lives
-          // inside this window and is clamped by ShaderMaskTransition so the
-          // wipes always get a usable share.
-          transitionDuration: config.transitionDuration,
-          reverseTransitionDuration: config.transitionDuration,
-          transitionsBuilder: ShaderTransitionBuilders.create(config),
+          // One duration for both directions; any cover hold lives inside
+          // this window (clamped by ShaderMaskTransition).
+          transitionDuration: transition.duration,
+          reverseTransitionDuration: transition.duration,
+          transitionsBuilder: ShaderTransitionBuilders.create(transition),
         );
+
+  /// The shader transition rendered between routes.
+  final ShaderTransition transition;
 }

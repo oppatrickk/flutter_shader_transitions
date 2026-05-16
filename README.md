@@ -46,8 +46,10 @@ Or in `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  shader_transitions: ^0.0.3
+  shader_transitions: ^0.1.0
 ```
+
+> **Upgrading from 0.0.x?** The config API changed — see [Migrating from 0.0.x](#migrating-from-00x).
 
 ## Quick start
 
@@ -86,13 +88,17 @@ GoRoute(
     opaque: false, // ← required
     transitionDuration: const Duration(milliseconds: 800),
     transitionsBuilder: ShaderTransitionBuilders.create(
-      const ShaderTransitionConfig.diamond(),
+      const DiamondTransition(),
     ),
   ),
 ),
 ```
 
 ## Usage
+
+Every transition is a sealed `ShaderTransition`: `DiamondTransition`,
+`CircleTransition`, or `WipeTransition`. All share `duration`, an optional
+`cover`, and an `invert` flag.
 
 ### Diamond grid
 
@@ -103,31 +109,34 @@ Navigator.of(context).push(
   ShaderTransitions.diamond(
     page: const NextPage(),
     direction: SweepDirection.leftToRight,
-    size: 40.0, // diamond cell size in pixels (≥ 1)
-    transitionDuration: const Duration(milliseconds: 800),
+    cellSize: 40.0, // diamond cell size in px (≥ 1)
+    duration: const Duration(milliseconds: 800),
   ),
 );
 ```
 
-Or with the `ShaderTransitionConfig.diamond` constructor for full control:
+Or build the transition directly for full control:
 
 ```dart
-const ShaderTransitionConfig.diamond(
+const DiamondTransition(
   direction: SweepDirection.bottomLeftToTopRight,
-  size: 28.0,
-  transitionDuration: Duration(milliseconds: 900),
+  cellSize: 28.0,
+  duration: Duration(milliseconds: 900),
 )
 ```
 
 ### Circle iris
 
-Center-expanding iris wipe. `direction` and `size` don't apply.
+Circular iris reveal. `origin` sets where it emanates from; `invert` makes
+it contract instead of expand.
 
 ```dart
 Navigator.of(context).push(
   ShaderTransitions.circle(
     page: const NextPage(),
-    transitionDuration: const Duration(milliseconds: 700),
+    origin: Alignment.bottomRight,
+    invert: true, // contracting iris
+    duration: const Duration(milliseconds: 700),
   ),
 );
 ```
@@ -142,32 +151,37 @@ Navigator.of(context).push(
     page: const NextPage(),
     direction: SweepDirection.rightToLeft,
     softness: 6.0, // feather width in px; 0 = hard edge
-    transitionDuration: const Duration(milliseconds: 600),
+    rotation: 0.0, // radians; tilts the edge
+    duration: const Duration(milliseconds: 600),
   ),
 );
 ```
 
 ### Cover color & hold (cinematic fade)
 
-Set `color` to fill the un-revealed area with a flat color instead of letting the outgoing page show through. Set `coverDuration` to hold on the fully-covered frame between the wipe-in and wipe-out.
+Pass a `TransitionCover` to fill the un-revealed area with a flat color
+instead of letting the outgoing page show through. `hold` keeps the screen
+fully covered between the wipe-in and wipe-out.
 
 ```dart
 Navigator.of(context).push(
   ShaderPageRoute(
     page: const NextPage(),
-    config: const ShaderTransitionConfig.wipe(
+    transition: const WipeTransition(
       direction: SweepDirection.leftToRight,
-      transitionDuration: Duration(milliseconds: 800),
-      color: Colors.black,
-      coverDuration: Duration(milliseconds: 600), // hold on black for 600 ms
+      duration: Duration(milliseconds: 800),
+      cover: TransitionCover(
+        color: Colors.black,
+        hold: Duration(milliseconds: 600), // hold on black for 600 ms
+      ),
     ),
   ),
 );
 ```
 
-`coverDuration` is clamped internally to at most 75% of `transitionDuration` — each wipe always gets at least 12.5% of the timeline, so the cover hold can never squash the wipes into nothing.
+`cover.hold` is clamped internally to at most 75% of `duration` — each wipe always gets at least 12.5% of the timeline, so the cover hold can never squash the wipes into nothing.
 
-Timeline with `transitionDuration: 800 ms` and `coverDuration: 600 ms`:
+Timeline with `duration: 800 ms` and `cover.hold: 600 ms`:
 
 ```
 | cover wipes in | hold full cover     | page wipes in |
@@ -176,20 +190,34 @@ Timeline with `transitionDuration: 800 ms` and `coverDuration: 600 ms`:
 
 ### Configuration reference
 
-| Field | Type | Default | Applies to |
+Shared by every `ShaderTransition`:
+
+| Field | Type | Default |
+|---|---|---|
+| `duration` | `Duration` | `800 ms` diamond · `700 ms` circle · `600 ms` wipe |
+| `cover` | `TransitionCover?` | `null` |
+| `invert` | `bool` | `false` |
+
+`TransitionCover`: `color` (`Color`, required), `hold` (`Duration`, default `Duration.zero`, clamped to ≤ 75% of `duration`).
+
+Per-type fields:
+
+| Type | Field | Type | Default |
 |---|---|---|---|
-| `type` | `TransitionType` | `diamond` | all |
-| `direction` | `SweepDirection` | `topLeftToBottomRight` | `diamond`, `wipe` |
-| `transitionDuration` | `Duration` | `800 ms` (diamond), `700 ms` (circle), `600 ms` (wipe) | all |
-| `size` | `double` | `40.0` (diamond), `4.0` (wipe) | `diamond` (cell px, min 1), `wipe` (feather px) |
-| `color` | `Color?` | `null` | all |
-| `coverDuration` | `Duration` | `Duration.zero` | all (only effective when `color != null`) |
+| `DiamondTransition` | `cellSize` | `double` | `40.0` (px, min 1) |
+| | `feather` | `double` | `0.0` |
+| | `direction` | `SweepDirection` | `topLeftToBottomRight` |
+| `CircleTransition` | `origin` | `Alignment` | `Alignment.center` |
+| | `feather` | `double` | `2.0` |
+| `WipeTransition` | `softness` | `double` | `4.0` (px; 0 = hard edge) |
+| | `direction` | `SweepDirection` | `leftToRight` |
+| | `rotation` | `double` | `0.0` (radians) |
 
 `SweepDirection` values: `topLeftToBottomRight`, `topRightToBottomLeft`, `bottomLeftToTopRight`, `bottomRightToTopLeft`, `leftToRight`, `rightToLeft`, `topToBottom`, `bottomToTop`.
 
-## With go_router / auto_route
+## With go_router / auto_route / app-wide
 
-`ShaderTransitionBuilders.create(config)` returns a standard `RouteTransitionsBuilder`, so any router that accepts one works.
+`ShaderTransitionBuilders.create(transition)` returns a standard `RouteTransitionsBuilder`, so any router that accepts one works.
 
 **go_router:**
 
@@ -202,7 +230,7 @@ GoRoute(
     opaque: false,
     transitionDuration: const Duration(milliseconds: 800),
     transitionsBuilder: ShaderTransitionBuilders.create(
-      const ShaderTransitionConfig.diamond(direction: SweepDirection.leftToRight),
+      const DiamondTransition(direction: SweepDirection.leftToRight),
     ),
   ),
 ),
@@ -218,13 +246,46 @@ AutoRoute(
     opaque: false,
     pageBuilder: (_, __, ___) => child,
     transitionsBuilder: ShaderTransitionBuilders.create(
-      const ShaderTransitionConfig.circle(),
+      const CircleTransition(),
     ),
   ),
 ),
 ```
 
-> ⚠️ **`opaque: false` is required.** Without it, Flutter stops drawing the route below the transition, causing a black flash at the start. Every Navigator-side path in this package sets it for you.
+**App-wide** via `ThemeData.pageTransitionsTheme`:
+
+```dart
+MaterialApp(
+  theme: ThemeData(
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: ShaderPageTransitionsBuilder(
+          WipeTransition(direction: SweepDirection.leftToRight),
+        ),
+        TargetPlatform.iOS: ShaderPageTransitionsBuilder(CircleTransition()),
+      },
+    ),
+  ),
+)
+```
+
+> ⚠️ **`opaque: false` is required** for the outgoing page to show through the un-revealed area. `ShaderPageRoute` sets it for you; with go_router/auto_route you set it on the page. `ShaderPageTransitionsBuilder` is best paired with a `cover` (covered transitions don't need the route below to be visible).
+
+## Migrating from 0.0.x
+
+0.1.0 replaced the single `ShaderTransitionConfig` with a sealed
+`ShaderTransition` hierarchy.
+
+| 0.0.x | 0.1.0 |
+|---|---|
+| `ShaderTransitionConfig.diamond(size: 40, transitionDuration: d)` | `DiamondTransition(cellSize: 40, duration: d)` |
+| `ShaderTransitionConfig.wipe(size: 6)` | `WipeTransition(softness: 6)` |
+| `ShaderTransitionConfig.circle()` | `CircleTransition()` |
+| `color: Colors.black, coverDuration: h` | `cover: TransitionCover(color: Colors.black, hold: h)` |
+| `ShaderPageRoute(config: c)` | `ShaderPageRoute(transition: t)` |
+| `ShaderTransitionBuilders.create(config)` | `ShaderTransitionBuilders.create(transition)` |
+
+The `ShaderTransitions.{diamond,circle,wipe}(...)` convenience factories keep working — only their parameter names changed (`size`→`cellSize`, `transitionDuration`→`duration`, etc.).
 
 ## How it works
 

@@ -3,13 +3,12 @@ import 'package:shader_transitions/shader_transitions.dart';
 
 import 'destination_screen.dart';
 
-// Anything below this width (in logical pixels) gets the page-navigation flow
-// instead of the two-column master/detail layout.
+// Below this width (logical px) the gallery uses page navigation instead of
+// the two-column master/detail layout.
 const double wideLayoutBreakpoint = 720;
 
-// ---------------------------------------------------------------------------
-// Type catalogue
-// ---------------------------------------------------------------------------
+/// Which sealed [ShaderTransition] family a catalogue entry builds.
+enum DemoType { diamond, circle, wipe }
 
 class TypeOption {
   const TypeOption({
@@ -20,7 +19,7 @@ class TypeOption {
     required this.description,
   });
 
-  final TransitionType type;
+  final DemoType type;
   final String label;
   final IconData icon;
   final Color accent;
@@ -29,21 +28,21 @@ class TypeOption {
 
 const List<TypeOption> types = [
   TypeOption(
-    type: TransitionType.diamond,
+    type: DemoType.diamond,
     label: 'Diamond',
     icon: Icons.diamond_outlined,
     accent: Color(0xFF7C4DFF),
     description: 'Grid of diamonds sweeps across the screen.',
   ),
   TypeOption(
-    type: TransitionType.circle,
+    type: DemoType.circle,
     label: 'Circle iris',
     icon: Icons.radio_button_unchecked,
     accent: Color(0xFF00BCD4),
-    description: 'Circular iris wipe expanding from the center.',
+    description: 'Circular iris reveal from any origin.',
   ),
   TypeOption(
-    type: TransitionType.wipe,
+    type: DemoType.wipe,
     label: 'Wipe',
     icon: Icons.swipe_right_outlined,
     accent: Color(0xFF00897B),
@@ -51,17 +50,7 @@ const List<TypeOption> types = [
   ),
 ];
 
-TypeOption optionFor(TransitionType t) => types.firstWhere((o) => o.type == t);
-
-// ---------------------------------------------------------------------------
-// Editor presets — values used when an editor mounts for a given type.
-// ---------------------------------------------------------------------------
-
-ShaderTransitionConfig defaultsFor(TransitionType t) => switch (t) {
-      TransitionType.diamond => const ShaderTransitionConfig.diamond(),
-      TransitionType.circle => const ShaderTransitionConfig.circle(),
-      TransitionType.wipe => const ShaderTransitionConfig.wipe(),
-    };
+TypeOption optionFor(DemoType t) => types.firstWhere((o) => o.type == t);
 
 // ---------------------------------------------------------------------------
 // Gallery screen — layout-aware shell.
@@ -75,24 +64,20 @@ class GalleryScreen extends StatefulWidget {
 }
 
 class _GalleryScreenState extends State<GalleryScreen> {
-  // Tracked only for the wide (two-column) layout. The narrow layout uses a
-  // pushed page so the gallery itself stays type-agnostic.
-  TransitionType? _selectedType;
+  DemoType? _selectedType;
 
-  void _push(BuildContext context, ShaderTransitionConfig config) {
+  void _push(BuildContext context, ShaderTransition transition) {
     Navigator.of(context).push(
       ShaderPageRoute(
-        page: DestinationScreen(config: config),
-        config: config,
+        page: DestinationScreen(transition: transition),
+        transition: transition,
       ),
     );
   }
 
-  void _openEditorPage(BuildContext context, TransitionType type) {
+  void _openEditorPage(BuildContext context, DemoType type) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (ctx) => EditorPage(type: type),
-      ),
+      MaterialPageRoute(builder: (ctx) => EditorPage(type: type)),
     );
   }
 
@@ -105,11 +90,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= wideLayoutBreakpoint;
-          if (isWide) {
-            return _buildWide(context);
-          }
-          return _buildNarrow(context);
+          return constraints.maxWidth >= wideLayoutBreakpoint
+              ? _buildWide(context)
+              : _buildNarrow(context);
         },
       ),
     );
@@ -136,11 +119,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
           child: _selectedType == null
               ? const EmptyState()
               : TransitionEditor(
-                  // ValueKey ensures the editor remounts (and resets its state)
-                  // when the user picks a different type from the list.
                   key: ValueKey(_selectedType),
                   type: _selectedType!,
-                  onTest: (config) => _push(context, config),
+                  onTest: (t) => _push(context, t),
                 ),
         ),
       ],
@@ -156,14 +137,14 @@ class _GalleryScreenState extends State<GalleryScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// Left-column type list (used in both layouts)
+// Left-column type list
 // ---------------------------------------------------------------------------
 
 class TypeList extends StatelessWidget {
   const TypeList({super.key, required this.selected, required this.onSelect});
 
-  final TransitionType? selected;
-  final ValueChanged<TransitionType> onSelect;
+  final DemoType? selected;
+  final ValueChanged<DemoType> onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +155,6 @@ class TypeList extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 4),
       itemBuilder: (context, index) {
         final option = types[index];
-        final isSelected = selected == option.type;
         return ListTile(
           leading: Container(
             width: 44,
@@ -187,17 +167,17 @@ class TypeList extends StatelessWidget {
           ),
           title: Text(
             option.label,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
           ),
           subtitle: Text(
             option.description,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          selected: isSelected,
-          selectedTileColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+          selected: selected == option.type,
+          selectedTileColor:
+              theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => onSelect(option.type),
         );
@@ -205,10 +185,6 @@ class TypeList extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Empty state shown in the wide layout before a type is picked
-// ---------------------------------------------------------------------------
 
 class EmptyState extends StatelessWidget {
   const EmptyState({super.key});
@@ -242,14 +218,10 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Narrow-layout editor page — wraps the editor in a Scaffold + back button
-// ---------------------------------------------------------------------------
-
 class EditorPage extends StatelessWidget {
   const EditorPage({super.key, required this.type});
 
-  final TransitionType type;
+  final DemoType type;
 
   @override
   Widget build(BuildContext context) {
@@ -263,11 +235,11 @@ class EditorPage extends StatelessWidget {
       ),
       body: TransitionEditor(
         type: type,
-        onTest: (config) {
+        onTest: (t) {
           Navigator.of(context).push(
             ShaderPageRoute(
-              page: DestinationScreen(config: config),
-              config: config,
+              page: DestinationScreen(transition: t),
+              transition: t,
             ),
           );
         },
@@ -277,7 +249,7 @@ class EditorPage extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Editor — shared by both layouts
+// Editor
 // ---------------------------------------------------------------------------
 
 class ColorChoice {
@@ -312,59 +284,68 @@ class TransitionEditor extends StatefulWidget {
     required this.onTest,
   });
 
-  final TransitionType type;
-  final ValueChanged<ShaderTransitionConfig> onTest;
+  final DemoType type;
+  final ValueChanged<ShaderTransition> onTest;
 
   @override
   State<TransitionEditor> createState() => _TransitionEditorState();
 }
 
 class _TransitionEditorState extends State<TransitionEditor> {
-  late SweepDirection _direction;
-  late double _transitionDurationMs;
-  late double _size;
+  SweepDirection _direction = SweepDirection.leftToRight;
+  double _durationMs = 700;
+  double _size = 40; // cell size (diamond) / softness (wipe)
+  bool _invert = false;
   Color? _color;
-  double _coverDurationMs = 0.0;
+  double _coverHoldMs = 0;
 
-  // Diamond uSize is clamped to ≥ 1 px in the shader; mirror that here so
-  // the slider can't request a value the shader will silently override.
   static const double _minSizePx = 1.0;
   static const double _maxSizePx = 100.0;
 
   @override
   void initState() {
     super.initState();
-    final defaults = defaultsFor(widget.type);
-    _direction = defaults.direction;
-    _transitionDurationMs = defaults.transitionDuration.inMilliseconds.toDouble();
-    _size = defaults.size;
-    _color = defaults.color;
-    _coverDurationMs = defaults.coverDuration.inMilliseconds.toDouble();
+    switch (widget.type) {
+      case DemoType.diamond:
+        _direction = SweepDirection.topLeftToBottomRight;
+        _durationMs = 800;
+        _size = 40;
+      case DemoType.circle:
+        _durationMs = 700;
+      case DemoType.wipe:
+        _direction = SweepDirection.leftToRight;
+        _durationMs = 600;
+        _size = 6;
+    }
   }
 
-  ShaderTransitionConfig _currentConfig() {
-    final transitionDuration = Duration(milliseconds: _transitionDurationMs.round());
-    // Cover hold is meaningful only when there's a cover color to hold on.
-    final coverDuration = _color == null ? Duration.zero : Duration(milliseconds: _coverDurationMs.round());
+  ShaderTransition _currentTransition() {
+    final duration = Duration(milliseconds: _durationMs.round());
+    final cover = _color == null
+        ? null
+        : TransitionCover(
+            color: _color!,
+            hold: Duration(milliseconds: _coverHoldMs.round()),
+          );
     return switch (widget.type) {
-      TransitionType.diamond => ShaderTransitionConfig.diamond(
+      DemoType.diamond => DiamondTransition(
           direction: _direction,
-          transitionDuration: transitionDuration,
-          size: _size,
-          color: _color,
-          coverDuration: coverDuration,
+          duration: duration,
+          cellSize: _size,
+          invert: _invert,
+          cover: cover,
         ),
-      TransitionType.circle => ShaderTransitionConfig.circle(
-          transitionDuration: transitionDuration,
-          color: _color,
-          coverDuration: coverDuration,
+      DemoType.circle => CircleTransition(
+          duration: duration,
+          invert: _invert,
+          cover: cover,
         ),
-      TransitionType.wipe => ShaderTransitionConfig.wipe(
+      DemoType.wipe => WipeTransition(
           direction: _direction,
-          transitionDuration: transitionDuration,
-          size: _size,
-          color: _color,
-          coverDuration: coverDuration,
+          duration: duration,
+          softness: _size,
+          invert: _invert,
+          cover: cover,
         ),
     };
   }
@@ -373,24 +354,23 @@ class _TransitionEditorState extends State<TransitionEditor> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final option = optionFor(widget.type);
-    final hasDirection = widget.type != TransitionType.circle;
-    final hasSize = widget.type != TransitionType.circle;
-    final sizeLabel = widget.type == TransitionType.diamond ? 'Cell size' : 'Feather';
+    final hasDirection = widget.type != DemoType.circle;
+    final hasSize = widget.type != DemoType.circle;
+    final sizeLabel =
+        widget.type == DemoType.diamond ? 'Cell size' : 'Softness';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header banner
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: option.accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: option.accent.withValues(alpha: 0.3),
-              ),
+              border:
+                  Border.all(color: option.accent.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -407,10 +387,8 @@ class _TransitionEditorState extends State<TransitionEditor> {
                           color: option.accent,
                         ),
                       ),
-                      Text(
-                        option.description,
-                        style: theme.textTheme.bodySmall,
-                      ),
+                      Text(option.description,
+                          style: theme.textTheme.bodySmall),
                     ],
                   ),
                 ),
@@ -418,7 +396,6 @@ class _TransitionEditorState extends State<TransitionEditor> {
             ),
           ),
           const SizedBox(height: 24),
-
           if (hasDirection) ...[
             Text('Direction', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
@@ -437,26 +414,20 @@ class _TransitionEditorState extends State<TransitionEditor> {
             ),
             const SizedBox(height: 20),
           ],
-
-          Text(
-            'Transition duration: ${_transitionDurationMs.round()} ms',
-            style: theme.textTheme.labelLarge,
-          ),
+          Text('Duration: ${_durationMs.round()} ms',
+              style: theme.textTheme.labelLarge),
           Slider(
-            value: _transitionDurationMs,
+            value: _durationMs,
             min: 100,
             max: 2000,
             divisions: 19,
-            label: '${_transitionDurationMs.round()} ms',
-            onChanged: (v) => setState(() => _transitionDurationMs = v),
+            label: '${_durationMs.round()} ms',
+            onChanged: (v) => setState(() => _durationMs = v),
           ),
-
           if (hasSize) ...[
             const SizedBox(height: 4),
-            Text(
-              '$sizeLabel: ${_size.toStringAsFixed(1)} px',
-              style: theme.textTheme.labelLarge,
-            ),
+            Text('$sizeLabel: ${_size.toStringAsFixed(1)} px',
+                style: theme.textTheme.labelLarge),
             Slider(
               value: _size.clamp(_minSizePx, _maxSizePx),
               min: _minSizePx,
@@ -464,8 +435,19 @@ class _TransitionEditorState extends State<TransitionEditor> {
               onChanged: (v) => setState(() => _size = v),
             ),
           ],
-
-          const SizedBox(height: 12),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Invert'),
+            subtitle: Text(
+              widget.type == DemoType.circle
+                  ? 'Contracting iris instead of expanding'
+                  : 'Reverse which side reveals first',
+              style: theme.textTheme.bodySmall,
+            ),
+            value: _invert,
+            onChanged: (v) => setState(() => _invert = v),
+          ),
+          const SizedBox(height: 8),
           Text('Cover color', style: theme.textTheme.labelLarge),
           const SizedBox(height: 8),
           Wrap(
@@ -480,33 +462,29 @@ class _TransitionEditorState extends State<TransitionEditor> {
                 ),
             ],
           ),
-
           if (_color != null) ...[
             const SizedBox(height: 16),
-            Text(
-              'Cover duration: ${_coverDurationMs.round()} ms',
-              style: theme.textTheme.labelLarge,
-            ),
+            Text('Cover hold: ${_coverHoldMs.round()} ms',
+                style: theme.textTheme.labelLarge),
             Slider(
-              value: _coverDurationMs.clamp(0.0, 3000.0),
+              value: _coverHoldMs.clamp(0.0, 3000.0),
               min: 0,
               max: 3000,
               divisions: 30,
-              label: '${_coverDurationMs.round()} ms',
-              onChanged: (v) => setState(() => _coverDurationMs = v),
+              label: '${_coverHoldMs.round()} ms',
+              onChanged: (v) => setState(() => _coverHoldMs = v),
             ),
             Text(
-              'How long the screen stays at full cover, taken from within the '
-              'transition duration. Clamped so each wipe still gets a share.',
+              'Time held at full cover, taken from within the duration. '
+              'Clamped so each wipe still gets a share.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],
-
           const SizedBox(height: 28),
           FilledButton.icon(
-            onPressed: () => widget.onTest(_currentConfig()),
+            onPressed: () => widget.onTest(_currentTransition()),
             icon: const Icon(Icons.play_arrow),
             label: const Text('Test transition'),
             style: FilledButton.styleFrom(
@@ -535,7 +513,9 @@ class ColorChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final borderColor = selected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant;
+    final borderColor = selected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.outlineVariant;
     final fill = choice.color;
 
     return InkWell(
@@ -555,18 +535,13 @@ class ColorChip extends StatelessWidget {
               height: 18,
               decoration: BoxDecoration(
                 color: fill ?? Colors.transparent,
-                border: Border.all(
-                  color: theme.colorScheme.outline,
-                  width: 1,
-                ),
+                border:
+                    Border.all(color: theme.colorScheme.outline, width: 1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: fill == null
-                  ? Icon(
-                      Icons.block,
-                      size: 12,
-                      color: theme.colorScheme.outline,
-                    )
+                  ? Icon(Icons.block,
+                      size: 12, color: theme.colorScheme.outline)
                   : null,
             ),
             const SizedBox(width: 8),

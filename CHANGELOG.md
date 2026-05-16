@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.1.0 — API redesign (breaking)
+
+The single overloaded `ShaderTransitionConfig` is replaced by a sealed
+`ShaderTransition` hierarchy with a clear, shared parameter vocabulary.
+
+**Breaking changes**
+
+- Removed `ShaderTransitionConfig`, `TransitionType`. Use the sealed types:
+  `DiamondTransition`, `CircleTransition`, `WipeTransition`.
+- `ShaderPageRoute(config:)` → `ShaderPageRoute(transition:)`.
+- `ShaderTransitionBuilders.create(config)` now takes a `ShaderTransition`.
+- The overloaded `size` is gone: it's `DiamondTransition.cellSize`,
+  `WipeTransition.softness`.
+- `transitionDuration` → `duration`. Loose `color` + `coverDuration` are
+  grouped into `TransitionCover(color:, hold:)` passed as `cover:`.
+
+**Migration**
+
+| 0.0.x | 0.1.0 |
+|---|---|
+| `ShaderTransitionConfig.diamond(size: 40, transitionDuration: d)` | `DiamondTransition(cellSize: 40, duration: d)` |
+| `ShaderTransitionConfig.wipe(size: 6)` | `WipeTransition(softness: 6)` |
+| `ShaderTransitionConfig.circle()` | `CircleTransition()` |
+| `color: Colors.black, coverDuration: h` | `cover: TransitionCover(color: Colors.black, hold: h)` |
+| `ShaderPageRoute(config: c)` | `ShaderPageRoute(transition: t)` |
+
+**New**
+
+- `CircleTransition.origin` (`Alignment`) — iris can emanate from any point.
+- Shared `invert` flag — e.g. `CircleTransition(invert: true)` is a
+  contracting iris; flips reveal order for directional transitions.
+- `WipeTransition.rotation` (radians) — tilt the wipe edge.
+- `ShaderPageTransitionsBuilder` — drop into
+  `ThemeData.pageTransitionsTheme` for app-wide shader transitions.
+- Unified shader uniform layout v2 (origin / direction / feather / cellSize
+  / rotation / invert) shared by every `.frag`.
+
 ## 0.0.3
 
 - Lower the SDK floor to Dart 3.0 / Flutter 3.10 (was Dart 3.2 / Flutter 3.16). This is the lowest that supports the Dart 3 records & patterns used in `lib/` plus `ui.FragmentProgram.fromAsset` (stable since Flutter 3.7), widening compatibility for consumers.

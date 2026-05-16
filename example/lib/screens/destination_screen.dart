@@ -6,17 +6,17 @@ import 'package:shader_transitions/shader_transitions.dart';
 /// Shows details about the active transition and lets the user pop back
 /// (which plays the reverse animation) or push another layer forward.
 class DestinationScreen extends StatelessWidget {
-  const DestinationScreen({super.key, required this.config});
+  const DestinationScreen({super.key, required this.transition});
 
-  final ShaderTransitionConfig config;
+  final ShaderTransition transition;
 
-  String get _typeName => switch (config.type) {
-        TransitionType.diamond => 'Diamond',
-        TransitionType.circle => 'Circle',
-        TransitionType.wipe => 'Wipe',
+  String get _typeName => switch (transition) {
+        DiamondTransition() => 'Diamond',
+        CircleTransition() => 'Circle',
+        WipeTransition() => 'Wipe',
       };
 
-  String get _directionName => switch (config.direction) {
+  String _directionName(SweepDirection d) => switch (d) {
         SweepDirection.topLeftToBottomRight => 'Top-left → Bottom-right',
         SweepDirection.bottomRightToTopLeft => 'Bottom-right → Top-left',
         SweepDirection.leftToRight => 'Left → Right',
@@ -27,11 +27,44 @@ class DestinationScreen extends StatelessWidget {
         SweepDirection.bottomLeftToTopRight => 'Bottom-left → Top-right',
       };
 
-  Color get _accentColor => switch (config.type) {
-        TransitionType.diamond => const Color(0xFF7C4DFF),
-        TransitionType.circle => const Color(0xFF00BCD4),
-        TransitionType.wipe => const Color(0xFF00897B),
+  Color get _accentColor => switch (transition) {
+        DiamondTransition() => const Color(0xFF7C4DFF),
+        CircleTransition() => const Color(0xFF00BCD4),
+        WipeTransition() => const Color(0xFF00897B),
       };
+
+  IconData get _icon => switch (transition) {
+        DiamondTransition() => Icons.diamond_outlined,
+        CircleTransition() => Icons.radio_button_unchecked,
+        WipeTransition() => Icons.swipe_right_outlined,
+      };
+
+  /// Per-type detail rows for the info panel.
+  List<(String, String)> _details() {
+    final t = transition;
+    switch (t) {
+      case DiamondTransition():
+        return [
+          ('Direction', _directionName(t.direction)),
+          ('Duration', '${t.duration.inMilliseconds} ms'),
+          ('Cell size', '${t.cellSize.toStringAsFixed(0)} px'),
+          ('Invert', t.invert ? 'Yes' : 'No'),
+        ];
+      case CircleTransition():
+        return [
+          ('Origin', '${t.origin.x}, ${t.origin.y}'),
+          ('Duration', '${t.duration.inMilliseconds} ms'),
+          ('Invert', t.invert ? 'Contracting' : 'Expanding'),
+        ];
+      case WipeTransition():
+        return [
+          ('Direction', _directionName(t.direction)),
+          ('Duration', '${t.duration.inMilliseconds} ms'),
+          ('Softness', '${t.softness.toStringAsFixed(0)} px'),
+          ('Invert', t.invert ? 'Yes' : 'No'),
+        ];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,44 +93,16 @@ class DestinationScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: accent.withValues(alpha: 0.3)),
                 ),
-                child: Icon(
-                  config.type == TransitionType.diamond
-                      ? Icons.diamond_outlined
-                      : config.type == TransitionType.circle
-                          ? Icons.radio_button_unchecked
-                          : Icons.swipe_right_outlined,
-                  size: 72,
-                  color: accent,
-                ),
+                child: Icon(_icon, size: 72, color: accent),
               ),
 
               const SizedBox(height: 32),
 
               // Transition details
               InfoRow(label: 'Type', value: _typeName, accent: accent),
-              const Divider(height: 24),
-              InfoRow(
-                label: 'Direction',
-                value: config.type == TransitionType.circle
-                    ? 'Center outward'
-                    : _directionName,
-                accent: accent,
-              ),
-              const Divider(height: 24),
-              InfoRow(
-                label: 'Duration',
-                value: '${config.transitionDuration.inMilliseconds} ms',
-                accent: accent,
-              ),
-              if (config.type != TransitionType.circle) ...[
+              for (final (label, value) in _details()) ...[
                 const Divider(height: 24),
-                InfoRow(
-                  label: config.type == TransitionType.diamond
-                      ? 'Cell size'
-                      : 'Feather',
-                  value: '${config.size.toStringAsFixed(0)} px',
-                  accent: accent,
-                ),
+                InfoRow(label: label, value: value, accent: accent),
               ],
 
               const Spacer(),
@@ -106,8 +111,8 @@ class DestinationScreen extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: () => Navigator.of(context).push(
                   ShaderPageRoute(
-                    page: DestinationScreen(config: config),
-                    config: config,
+                    page: DestinationScreen(transition: transition),
+                    transition: transition,
                   ),
                 ),
                 icon: const Icon(Icons.layers_outlined),

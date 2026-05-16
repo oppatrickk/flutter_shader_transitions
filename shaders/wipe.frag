@@ -1,42 +1,48 @@
 #version 460 core
 #include <flutter/runtime_effect.glsl>
 
-// Uniform layout (identical across all shaders — set unconditionally by ShaderMaskTransition):
-// 0: uProgress    — animation.value (0.0 → 1.0)
-// 1: uResolution  — vec2.x (screen width)
-// 2: uResolution  — vec2.y (screen height)
-// 3: uSize        — feather/softness width in pixels (0 = hard edge)
-// 4: uDirection   — vec2.x (normalized wipe direction)
-// 5: uDirection   — vec2.y (normalized wipe direction)
+// Unified uniform layout v2 (set unconditionally by ShaderMaskTransition):
+//  0    uProgress   — animation phase progress (0.0 → 1.0)
+//  1-2  uResolution — bounds size in px
+//  3-4  uOrigin     — normalized [0,1] focal point (unused by wipe)
+//  5-6  uDirection   — sweep direction vector (normalized)
+//  7    uFeather     — edge softness in px (0 = hard edge)
+//  8    uCellSize    — grid cell px (unused by wipe)
+//  9    uRotation    — rotation of the wipe edge, radians
+//  10   uInvert      — 0/1, flips which side reveals first
 uniform float uProgress;
 uniform vec2  uResolution;
-uniform float uSize;
+uniform vec2  uOrigin;
 uniform vec2  uDirection;
+uniform float uFeather;
+uniform float uCellSize;
+uniform float uRotation;
+uniform float uInvert;
 
 out vec4 fragColor;
 
 void main() {
     vec2 uv = FlutterFragCoord().xy / uResolution;
-    vec2 d = normalize(uDirection);
 
-    // Project UV onto the wipe direction. The raw range of dot(uv, d) over
-    // uv ∈ [0,1]² depends on the signs of d.x and d.y — for negative-axis
-    // directions (e.g. rightToLeft) it spans [-1,0], and for diagonals it
-    // spans [0, √2]. Remap to [0,1] so pos=0 is always the start corner of
-    // the sweep and pos=1 is the end corner, regardless of direction.
-    float raw = dot(uv, d);
-    float minPos = min(d.x, 0.0) + min(d.y, 0.0);
-    float maxPos = max(d.x, 0.0) + max(d.y, 0.0);
-    float pos = (raw - minPos) / (maxPos - minPos);
+    // Rotate the sweep direction around screen center by uRotation.
+    vec2 d0 = normalize(uDirection);
+    float c = cos(uRotation);
+    float s = sin(uRotation);
+    vec2 d = vec2(d0.x * c - d0.y * s, d0.x * s + d0.y * c);
 
-    // Convert the pixel-space feather width into normalized UV space.
-    // A minimum of 0.001 prevents division issues when uSize=0 (hard edge).
-    float feather = max(uSize / max(uResolution.x, uResolution.y), 0.001);
+    // Center-based projection remap: pos is 0 at the start corner of the
+    // sweep and 1 at the end corner, for ANY direction (axis-aligned,
+    // negative, diagonal, or rotated). h is half the projected extent of
+    // the [0,1]^2 box onto d.
+    vec2 rel = uv - 0.5;
+    float proj = dot(rel, d);
+    float h = 0.5 * (abs(d.x) + abs(d.y)) + 1e-5;
+    float pos = (proj + h) / (2.0 * h);
+    pos = mix(pos, 1.0 - pos, uInvert);
 
-    // alpha=1 where pos < uProgress (already revealed), 0 where pos > uProgress (not yet revealed).
-    // smoothstep creates a soft feathered edge of width 2*feather around the wipe boundary.
+    // Convert px feather to normalized units; min keeps a hard edge stable.
+    float feather = max(uFeather / max(uResolution.x, uResolution.y), 0.001);
     float alpha = 1.0 - smoothstep(uProgress - feather, uProgress + feather, pos);
 
-    // Output only alpha — RGB is irrelevant when used with ShaderMask(blendMode: BlendMode.dstIn).
     fragColor = vec4(1.0, 1.0, 1.0, alpha);
 }

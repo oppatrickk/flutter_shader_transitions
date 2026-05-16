@@ -2,7 +2,7 @@
 ///
 /// ## Quick start
 ///
-/// 1. **Preload shaders** at app startup (required — compiling shaders is slow):
+/// 1. **Preload shaders** at app startup (compiling shaders is slow):
 ///    ```dart
 ///    void main() async {
 ///      WidgetsFlutterBinding.ensureInitialized();
@@ -11,38 +11,31 @@
 ///    }
 ///    ```
 ///
-/// 2. **Push a route** using the convenience methods:
+/// 2. **Push a route**:
 ///    ```dart
-///    // Diamond wipe
-///    Navigator.of(context).push(ShaderTransitions.diamond(page: const NextPage()));
-///
-///    // Circular iris
-///    Navigator.of(context).push(ShaderTransitions.circle(page: const NextPage()));
-///
-///    // Directional wipe
-///    Navigator.of(context).push(ShaderTransitions.wipe(
-///      page: const NextPage(),
-///      direction: SweepDirection.rightToLeft,
-///    ));
-///    ```
-///
-/// 3. **go_router / auto_route** — use [ShaderTransitionBuilders.create]:
-///    ```dart
-///    CustomTransitionPage(
-///      child: const NextPage(),
-///      opaque: false,  // required!
-///      transitionsBuilder: ShaderTransitionBuilders.create(
-///        const ShaderTransitionConfig.diamond(),
+///    Navigator.of(context).push(
+///      ShaderTransitions.diamond(page: const NextPage()),
+///    );
+///    Navigator.of(context).push(
+///      ShaderTransitions.circle(page: const NextPage(), invert: true),
+///    );
+///    Navigator.of(context).push(
+///      ShaderTransitions.wipe(
+///        page: const NextPage(),
+///        direction: SweepDirection.rightToLeft,
 ///      ),
-///    )
+///    );
 ///    ```
+///
+/// 3. **go_router / auto_route** — use [ShaderTransitionBuilders.create];
+///    app-wide — use [ShaderPageTransitionsBuilder].
 library shader_transitions;
 
 export 'src/transition_config.dart';
 export 'src/shader_registry.dart' show ShaderRegistry;
 export 'src/shader_page_route.dart';
 export 'src/shader_transition_builders.dart';
-// shader_mask_widget.dart is an internal implementation detail — not exported.
+// shader_mask_widget.dart is an internal implementation detail.
 
 import 'package:flutter/widgets.dart';
 
@@ -50,109 +43,88 @@ import 'src/shader_page_route.dart';
 import 'src/shader_registry.dart';
 import 'src/transition_config.dart';
 
-/// Main entry point for the shader_transitions package.
-///
-/// Use [preload] at app startup, then the convenience factory methods to
-/// push shader-powered routes.
+/// Entry point: [preload] at startup, then the factory methods to push
+/// shader-powered routes.
 class ShaderTransitions {
   ShaderTransitions._();
 
-  /// Pre-loads and compiles all fragment shader programs.
-  ///
-  /// Must be called before the first transition. Subsequent calls are no-ops.
-  ///
-  /// ```dart
-  /// void main() async {
-  ///   WidgetsFlutterBinding.ensureInitialized();
-  ///   await ShaderTransitions.preload();
-  ///   runApp(const MyApp());
-  /// }
-  /// ```
+  /// Pre-compiles all bundled fragment shaders. Call before the first
+  /// transition; subsequent calls are no-ops.
   static Future<void> preload() => ShaderRegistry.instance.preload();
 
-  /// Whether shaders have been successfully preloaded.
-  ///
-  /// Use this to conditionally disable transition buttons until the app is
-  /// ready, or to guard against missing preload calls.
+  /// Whether [preload] has completed successfully.
   static bool get isReady => ShaderRegistry.instance.isLoaded;
 
-  /// Pushes a diamond-wipe [ShaderPageRoute].
-  ///
-  /// ```dart
-  /// Navigator.of(context).push(
-  ///   ShaderTransitions.diamond(
-  ///     page: const NextPage(),
-  ///     direction: SweepDirection.leftToRight,
-  ///   ),
-  /// );
-  /// ```
+  /// Pushes a [DiamondTransition] route.
   static ShaderPageRoute<T> diamond<T>({
     required Widget page,
     SweepDirection direction = SweepDirection.topLeftToBottomRight,
-    Duration transitionDuration = const Duration(milliseconds: 800),
-    double size = 40.0,
+    Duration duration = const Duration(milliseconds: 800),
+    double cellSize = 40.0,
+    double feather = 0.0,
+    bool invert = false,
+    TransitionCover? cover,
     RouteSettings? settings,
   }) {
     return ShaderPageRoute<T>(
       page: page,
-      config: ShaderTransitionConfig(
-        type: TransitionType.diamond,
+      transition: DiamondTransition(
         direction: direction,
-        transitionDuration: transitionDuration,
-        size: size,
+        duration: duration,
+        cellSize: cellSize,
+        feather: feather,
+        invert: invert,
+        cover: cover,
       ),
       settings: settings,
     );
   }
 
-  /// Pushes a circular iris-wipe [ShaderPageRoute].
-  ///
-  /// ```dart
-  /// Navigator.of(context).push(
-  ///   ShaderTransitions.circle(page: const NextPage()),
-  /// );
-  /// ```
+  /// Pushes a [CircleTransition] (iris) route. Set [invert] for a
+  /// contracting iris; [origin] to start from a corner or tap point.
   static ShaderPageRoute<T> circle<T>({
     required Widget page,
-    Duration transitionDuration = const Duration(milliseconds: 700),
+    Alignment origin = Alignment.center,
+    Duration duration = const Duration(milliseconds: 700),
+    double feather = 2.0,
+    bool invert = false,
+    TransitionCover? cover,
     RouteSettings? settings,
   }) {
     return ShaderPageRoute<T>(
       page: page,
-      config: ShaderTransitionConfig(
-        type: TransitionType.circle,
-        transitionDuration: transitionDuration,
+      transition: CircleTransition(
+        origin: origin,
+        duration: duration,
+        feather: feather,
+        invert: invert,
+        cover: cover,
       ),
       settings: settings,
     );
   }
 
-  /// Pushes a linear directional-wipe [ShaderPageRoute].
-  ///
-  /// [softness] controls the feather width in pixels (0 = hard edge).
-  ///
-  /// ```dart
-  /// Navigator.of(context).push(
-  ///   ShaderTransitions.wipe(
-  ///     page: const NextPage(),
-  ///     direction: SweepDirection.topToBottom,
-  ///   ),
-  /// );
-  /// ```
+  /// Pushes a [WipeTransition] route. [softness] is the feather width in px
+  /// (0 = hard edge); [rotation] tilts the edge in radians.
   static ShaderPageRoute<T> wipe<T>({
     required Widget page,
     SweepDirection direction = SweepDirection.leftToRight,
-    Duration transitionDuration = const Duration(milliseconds: 600),
+    Duration duration = const Duration(milliseconds: 600),
     double softness = 4.0,
+    double rotation = 0.0,
+    bool invert = false,
+    TransitionCover? cover,
     RouteSettings? settings,
   }) {
     return ShaderPageRoute<T>(
       page: page,
-      config: ShaderTransitionConfig(
-        type: TransitionType.wipe,
+      transition: WipeTransition(
         direction: direction,
-        transitionDuration: transitionDuration,
-        size: softness,
+        duration: duration,
+        softness: softness,
+        rotation: rotation,
+        invert: invert,
+        cover: cover,
       ),
       settings: settings,
     );

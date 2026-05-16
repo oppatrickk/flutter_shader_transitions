@@ -6,62 +6,58 @@ import 'package:flutter/widgets.dart';
 import 'shader_registry.dart';
 import 'transition_config.dart';
 
-/// Applies a shader as an alpha mask to [child] using [BlendMode.dstIn].
+/// Applies a [ShaderTransition] as an alpha mask to [child] using
+/// [BlendMode.dstIn].
 ///
 /// This is the core rendering primitive for all shader transitions.
 ///
-/// ## How it works (no cover color)
+/// ## How it works (no cover)
 ///
-/// The shader outputs an RGBA value where only the **alpha channel** matters.
-/// [ShaderMask] with [BlendMode.dstIn] multiplies the child's alpha by the
-/// shader's alpha — making the child transparent where `shader.alpha == 0`
-/// and fully opaque where `shader.alpha == 1`.
+/// The shader outputs RGBA where only the **alpha** matters. [ShaderMask]
+/// with [BlendMode.dstIn] multiplies the child's alpha by the shader's alpha
+/// — the child is transparent where `shader.alpha == 0` and opaque where it
+/// is `1`. Combined with `opaque: false` on the enclosing route, the
+/// outgoing page shows through the transparent region.
 ///
-/// Combined with `opaque: false` on the enclosing [PageRoute], this creates
-/// a true two-layer transition:
-/// - At `animation.value == 0.0`: child (incoming page) is fully transparent
-///   → the outgoing page shows through from the Navigator's layer stack.
-/// - At `animation.value == 1.0`: child (incoming page) is fully opaque
-///   → transition is complete.
+/// ## How it works (with [TransitionCover])
 ///
-/// ## How it works (with cover color)
+/// When `transition.cover != null` the transition is a three-phase sequence
+/// backed by **two** shader instances:
 ///
-/// When `config.color` is non-null, the transition becomes a three-phase
-/// sequence backed by **two** shader instances:
-///
-/// 1. **Wipe in** — the cover color sweeps over the outgoing page using a
-///    masked [ColoredBox]. The incoming page is fully hidden.
-/// 2. **Hold** — for `config.coverDuration` the screen is held at full
-///    cover. No wipe motion happens.
+/// 1. **Wipe in** — the cover color sweeps over the outgoing page.
+/// 2. **Hold** — for `cover.hold` the screen stays fully covered.
 /// 3. **Wipe out** — the incoming page sweeps over the cover.
 ///
-/// When `config.coverDuration == Duration.zero`, phases 1 and 3 abut
-/// directly: a continuous cross-fade through the color with no hold frame.
+/// With `cover.hold == Duration.zero` phases 1 and 3 abut: a continuous
+/// cross-fade through the color.
 ///
-/// ## Uniform layout
+/// ## Uniform layout v2
 ///
-/// All shaders share the same 6-uniform layout, set unconditionally:
+/// Every `.frag` shares this layout, set unconditionally (unused slots are
+/// harmless):
 /// ```
-/// index 0 — uProgress    : float  (per-shader phase progress, 0.0→1.0)
-/// index 1 — uResolution.x: float  (bounds.width)
-/// index 2 — uResolution.y: float  (bounds.height)
-/// index 3 — uSize        : float  (diamond cell px / wipe feather px)
-/// index 4 — uDirection.x : float  (normalized sweep direction x)
-/// index 5 — uDirection.y : float  (normalized sweep direction y)
+/// 0    uProgress   : float  per-phase progress 0→1
+/// 1-2  uResolution : vec2   bounds size px
+/// 3-4  uOrigin     : vec2   normalized [0,1] focal point
+/// 5-6  uDirection  : vec2   normalized sweep vector
+/// 7    uFeather    : float  edge softness px
+/// 8    uCellSize   : float  diamond grid px
+/// 9    uRotation   : float  radians
+/// 10   uInvert     : float  0/1 reverse flag
 /// ```
 class ShaderMaskTransition extends StatefulWidget {
   const ShaderMaskTransition({
     super.key,
     required this.animation,
-    required this.config,
+    required this.transition,
     required this.child,
   });
 
   /// The route animation (0.0 → 1.0 on push, 1.0 → 0.0 on pop).
   final Animation<double> animation;
 
-  /// Configuration providing direction, size, and type metadata.
-  final ShaderTransitionConfig config;
+  /// The transition to render (sealed: diamond / circle / wipe).
+  final ShaderTransition transition;
 
   /// The incoming page widget.
   final Widget child;
@@ -71,20 +67,19 @@ class ShaderMaskTransition extends StatefulWidget {
 }
 
 class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
-  // Mask for the incoming page. Always created.
   ui.FragmentShader? _pageShader;
-  // Mask for the cover ColoredBox. Created only when config.color != null —
-  // the cover wipe-in needs its own uniform state independent of the page
-  // wipe-out, so we keep a second FragmentShader instance.
+  // Created only when transition.cover != null — the cover wipe-in needs
+  // uniform state independent of the page wipe-out.
   ui.FragmentShader? _coverShader;
 
   @override
   void initState() {
     super.initState();
-    _pageShader = ShaderRegistry.instance.createShader(widget.config.type.name);
-    if (widget.config.color != null) {
+    _pageShader =
+        ShaderRegistry.instance.createShader(widget.transition.shaderKey);
+    if (widget.transition.cover != null) {
       _coverShader =
-          ShaderRegistry.instance.createShader(widget.config.type.name);
+          ShaderRegistry.instance.createShader(widget.transition.shaderKey);
     }
   }
 
@@ -95,53 +90,93 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
     super.dispose();
   }
 
-  // The cover hold can never exceed this fraction of the total transition
-  // window — each wipe is guaranteed at least (1 - this) / 2 of the timeline.
-  // 0.75 → wipes always get ≥ 12.5% each, even if the caller passes a
-  // coverDuration longer than transitionDuration.
+  // Cover hold can never exceed this fraction of the timeline — each wipe is
+  // guaranteed ≥ (1 - this) / 2, even if the caller passes an over-long hold.
   static const double _maxCoverFraction = 0.75;
 
-  /// Maps `animation.value ∈ [0, 1]` to per-phase progresses for the cover
-  /// and page shaders. See class-level dartdoc for the three-phase model.
-  ///
-  /// The cover hold sits inside [ShaderTransitionConfig.transitionDuration]
-  /// and is clamped to at most [_maxCoverFraction] of it, so the wipes
-  /// always have a meaningful share regardless of what the caller passes.
+  /// Maps `animation.value ∈ [0,1]` to per-phase progresses for the cover
+  /// and page shaders.
   ({double cover, double page}) _phaseProgresses(double t) {
-    final totalMs = widget.config.transitionDuration.inMilliseconds.toDouble();
-    if (totalMs <= 0) {
-      // Degenerate config — treat as fully revealed.
-      return (cover: 1.0, page: 1.0);
-    }
+    final totalMs = widget.transition.duration.inMilliseconds.toDouble();
+    if (totalMs <= 0) return (cover: 1.0, page: 1.0);
     final maxHoldMs = totalMs * _maxCoverFraction;
     final requestedHoldMs =
-        widget.config.coverDuration.inMilliseconds.toDouble();
+        (widget.transition.cover?.hold.inMilliseconds ?? 0).toDouble();
     final holdMs = requestedHoldMs.clamp(0.0, maxHoldMs);
     final wipeMs = (totalMs - holdMs) / 2.0;
     final phase1End = wipeMs / totalMs;
     final phase2End = (wipeMs + holdMs) / totalMs;
 
-    if (t < phase1End) {
-      return (cover: t / phase1End, page: 0.0);
-    }
-    if (t < phase2End) {
-      return (cover: 1.0, page: 0.0);
-    }
+    if (t < phase1End) return (cover: t / phase1End, page: 0.0);
+    if (t < phase2End) return (cover: 1.0, page: 0.0);
     return (cover: 1.0, page: (t - phase2End) / (1.0 - phase2End));
   }
 
+  /// Per-type geometry for the unified uniform block.
+  ({
+    double dx,
+    double dy,
+    double ox,
+    double oy,
+    double feather,
+    double cellSize,
+    double rotation,
+  }) _geometry() {
+    final tr = widget.transition;
+    switch (tr) {
+      case DiamondTransition():
+        final (dx, dy) = tr.direction.vector;
+        return (
+          dx: dx,
+          dy: dy,
+          ox: 0.5,
+          oy: 0.5,
+          feather: tr.feather,
+          cellSize: tr.cellSize,
+          rotation: 0.0,
+        );
+      case WipeTransition():
+        final (dx, dy) = tr.direction.vector;
+        return (
+          dx: dx,
+          dy: dy,
+          ox: 0.5,
+          oy: 0.5,
+          feather: tr.softness,
+          cellSize: 0.0,
+          rotation: tr.rotation,
+        );
+      case CircleTransition():
+        return (
+          dx: 1.0,
+          dy: 0.0,
+          // Alignment (-1..1) → normalized (0..1).
+          ox: (tr.origin.x + 1.0) / 2.0,
+          oy: (tr.origin.y + 1.0) / 2.0,
+          feather: tr.feather,
+          cellSize: 0.0,
+          rotation: 0.0,
+        );
+    }
+  }
+
   void _setUniforms(ui.FragmentShader shader, double progress, Rect bounds) {
-    final (dx, dy) = widget.config.direction.vector;
-    final len = math.sqrt(dx * dx + dy * dy);
-    final ndx = len > 0 ? dx / len : 0.0;
-    final ndy = len > 0 ? dy / len : 0.0;
+    final g = _geometry();
+    final len = math.sqrt(g.dx * g.dx + g.dy * g.dy);
+    final ndx = len > 0 ? g.dx / len : 0.0;
+    final ndy = len > 0 ? g.dy / len : 0.0;
 
     shader.setFloat(0, progress); // uProgress
     shader.setFloat(1, bounds.width); // uResolution.x
     shader.setFloat(2, bounds.height); // uResolution.y
-    shader.setFloat(3, widget.config.size); // uSize
-    shader.setFloat(4, ndx); // uDirection.x
-    shader.setFloat(5, ndy); // uDirection.y
+    shader.setFloat(3, g.ox); // uOrigin.x
+    shader.setFloat(4, g.oy); // uOrigin.y
+    shader.setFloat(5, ndx); // uDirection.x
+    shader.setFloat(6, ndy); // uDirection.y
+    shader.setFloat(7, g.feather); // uFeather
+    shader.setFloat(8, g.cellSize); // uCellSize
+    shader.setFloat(9, g.rotation); // uRotation
+    shader.setFloat(10, widget.transition.invert ? 1.0 : 0.0); // uInvert
   }
 
   Widget _maskedLayer({
@@ -164,13 +199,12 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
     if (_pageShader == null) {
       return FadeTransition(opacity: widget.animation, child: widget.child);
     }
-    final Color? color = widget.config.color;
+    final TransitionCover? cover = widget.transition.cover;
 
     return AnimatedBuilder(
       animation: widget.animation,
       builder: (context, child) {
-        if (color == null || _coverShader == null) {
-          // Single-shader path: classic mask reveal, no cover.
+        if (cover == null || _coverShader == null) {
           return _maskedLayer(
             shader: _pageShader!,
             progress: widget.animation.value,
@@ -178,7 +212,6 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
           );
         }
 
-        // Phased flow: cover wipes in, holds, then page wipes in.
         final phases = _phaseProgresses(widget.animation.value);
         return Stack(
           fit: StackFit.expand,
@@ -186,7 +219,7 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
             _maskedLayer(
               shader: _coverShader!,
               progress: phases.cover,
-              child: ColoredBox(color: color),
+              child: ColoredBox(color: cover.color),
             ),
             _maskedLayer(
               shader: _pageShader!,

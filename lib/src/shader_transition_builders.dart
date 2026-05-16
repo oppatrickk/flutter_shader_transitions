@@ -3,32 +3,33 @@ import 'package:flutter/material.dart';
 import 'shader_mask_widget.dart';
 import 'transition_config.dart';
 
-/// Factory for creating [RouteTransitionsBuilder] closures backed by a
-/// fragment shader.
+/// Factory + [PageTransitionsBuilder] for using a [ShaderTransition] with
+/// any router.
 ///
-/// The returned builder is compatible with:
-/// - Flutter's [PageRouteBuilder.transitionsBuilder]
-/// - **go_router**: `CustomTransitionPage(transitionsBuilder: ...)`
-/// - **auto_route**: `CustomRoute(transitionsBuilder: ...)`
+/// - Flutter Navigator: prefer [ShaderPageRoute].
+/// - **go_router**: `CustomTransitionPage(transitionsBuilder: ...)`.
+/// - **auto_route**: `CustomRoute(transitionsBuilder: ...)`.
+/// - App-wide default: [ShaderPageTransitionsBuilder] in
+///   `ThemeData.pageTransitionsTheme`.
 ///
-/// ## go_router usage
+/// ## go_router
 /// ```dart
 /// GoRoute(
 ///   path: '/next',
 ///   pageBuilder: (context, state) => CustomTransitionPage(
 ///     key: state.pageKey,
 ///     child: const NextPage(),
-///     opaque: false,  // ← required for the outgoing page to show through
+///     opaque: false, // ← required for the outgoing page to show through
 ///     transitionDuration: const Duration(milliseconds: 800),
 ///     reverseTransitionDuration: const Duration(milliseconds: 800),
 ///     transitionsBuilder: ShaderTransitionBuilders.create(
-///       const ShaderTransitionConfig.diamond(),
+///       const DiamondTransition(),
 ///     ),
 ///   ),
 /// )
 /// ```
 ///
-/// ## auto_route usage
+/// ## auto_route
 /// ```dart
 /// AutoRoute(
 ///   page: NextRoute.page,
@@ -37,27 +38,24 @@ import 'transition_config.dart';
 ///     opaque: false,
 ///     pageBuilder: (_, __, ___) => child,
 ///     transitionsBuilder: ShaderTransitionBuilders.create(
-///       const ShaderTransitionConfig.circle(),
+///       const CircleTransition(),
 ///     ),
 ///   ),
 /// )
 /// ```
 ///
-/// > **Important for go_router / auto_route users:** You must set
-/// > `opaque: false` on the page/route. Without it, Flutter stops rendering
-/// > the outgoing route underneath, causing a black flash at transition start.
+/// > **go_router / auto_route users:** set `opaque: false` on the page/route.
+/// > Without it Flutter stops rendering the outgoing route, causing a black
+/// > flash at the start of the transition.
 class ShaderTransitionBuilders {
   ShaderTransitionBuilders._();
 
-  /// Creates a [RouteTransitionsBuilder] closure for the given [config].
+  /// Creates a [RouteTransitionsBuilder] for the given [transition].
   ///
-  /// The [ShaderMaskTransition] widget manages the [FragmentShader] lifecycle
-  /// internally — creating it on mount and disposing it on unmount. This
-  /// avoids dangling shader references on platforms (e.g. Flutter web/WASM)
-  /// where native shader backing can be finalized independently of the Dart
-  /// wrapper. Falls back to [FadeTransition] if the shader program was not
+  /// The [ShaderMaskTransition] manages the [FragmentShader] lifecycle
+  /// internally and falls back to [FadeTransition] if shaders were not
   /// preloaded.
-  static RouteTransitionsBuilder create(ShaderTransitionConfig config) {
+  static RouteTransitionsBuilder create(ShaderTransition transition) {
     return (
       BuildContext context,
       Animation<double> animation,
@@ -66,9 +64,55 @@ class ShaderTransitionBuilders {
     ) {
       return ShaderMaskTransition(
         animation: animation,
-        config: config,
+        transition: transition,
         child: child,
       );
     };
+  }
+}
+
+/// A [PageTransitionsBuilder] that applies a [ShaderTransition] app-wide via
+/// `ThemeData.pageTransitionsTheme`.
+///
+/// ```dart
+/// MaterialApp(
+///   theme: ThemeData(
+///     pageTransitionsTheme: const PageTransitionsTheme(
+///       builders: {
+///         TargetPlatform.android: ShaderPageTransitionsBuilder(
+///           WipeTransition(direction: SweepDirection.leftToRight),
+///         ),
+///         TargetPlatform.iOS: ShaderPageTransitionsBuilder(CircleTransition()),
+///       },
+///     ),
+///   ),
+/// )
+/// ```
+///
+/// Note: routes themselves must be non-opaque for the outgoing page to show
+/// through. `MaterialPageRoute` is opaque by default, so for the full
+/// cross-fade effect prefer [ShaderPageRoute]; this builder is best for
+/// covered transitions (with a [TransitionCover]) where the incoming page is
+/// the only thing that needs to be visible.
+class ShaderPageTransitionsBuilder extends PageTransitionsBuilder {
+  /// Creates an app-wide shader page transition.
+  const ShaderPageTransitionsBuilder(this.transition);
+
+  /// The shader transition applied to every matching route.
+  final ShaderTransition transition;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return ShaderMaskTransition(
+      animation: animation,
+      transition: transition,
+      child: child,
+    );
   }
 }

@@ -1,39 +1,47 @@
 #version 460 core
 #include <flutter/runtime_effect.glsl>
 
-// Uniform layout (identical across all shaders — set unconditionally by ShaderMaskTransition):
-// 0: uProgress    — animation.value (0.0 → 1.0)
-// 1: uResolution  — vec2.x (screen width)
-// 2: uResolution  — vec2.y (screen height)
-// 3: uSize        — unused (declared to keep layout consistent)
-// 4: uDirection   — vec2.x (unused, declared to keep layout consistent)
-// 5: uDirection   — vec2.y (unused, declared to keep layout consistent)
+// Unified uniform layout v2 (set unconditionally by ShaderMaskTransition):
+//  0    uProgress   — animation phase progress (0.0 → 1.0)
+//  1-2  uResolution — bounds size in px
+//  3-4  uOrigin     — normalized [0,1] iris focal point
+//  5-6  uDirection   — unused by circle
+//  7    uFeather     — ring edge softness in px
+//  8    uCellSize    — unused by circle
+//  9    uRotation    — unused by circle
+//  10   uInvert      — 0/1, expanding (0) vs contracting (1) iris
 uniform float uProgress;
 uniform vec2  uResolution;
-uniform float uSize;
+uniform vec2  uOrigin;
 uniform vec2  uDirection;
+uniform float uFeather;
+uniform float uCellSize;
+uniform float uRotation;
+uniform float uInvert;
 
 out vec4 fragColor;
 
 void main() {
     vec2 fragCoord = FlutterFragCoord().xy;
 
-    // Normalized distance from the center of the screen.
-    // 0.0 at center, ~1.0 at the midpoints of the screen edges,
-    // slightly above 1.0 at the corners.
-    vec2 center = uResolution * 0.5;
-    float dist = length(fragCoord - center);
-    float maxDist = length(center); // distance to the midpoint of the shorter edge
+    // Iris focal point in px from the normalized [0,1] origin.
+    vec2 origin = uOrigin * uResolution;
+    float dist = length(fragCoord - origin);
+
+    // Farthest screen corner from the origin, so the iris always fully
+    // covers the screen at uProgress = 1 regardless of where it starts.
+    float maxDist = max(
+        max(length(origin), length(vec2(uResolution.x, 0.0) - origin)),
+        max(length(vec2(0.0, uResolution.y) - origin),
+            length(uResolution - origin))
+    );
 
     float normDist = dist / maxDist;
+    float feather = max(uFeather / maxDist, 0.001);
 
-    // Smooth 2-pixel feathered edge for anti-aliasing.
-    float feather = 2.0 / maxDist;
+    // alpha=1 inside the growing circle. uInvert flips to a contracting iris.
+    float a = 1.0 - smoothstep(uProgress - feather, uProgress + feather, normDist);
+    float alpha = mix(a, 1.0 - a, uInvert);
 
-    // alpha=1 inside the growing circle, 0 outside.
-    // As uProgress goes 0→1, the circle expands from the center outward.
-    float alpha = 1.0 - smoothstep(uProgress - feather, uProgress + feather, normDist);
-
-    // Output only alpha — RGB is irrelevant when used with ShaderMask(blendMode: BlendMode.dstIn).
     fragColor = vec4(1.0, 1.0, 1.0, alpha);
 }
