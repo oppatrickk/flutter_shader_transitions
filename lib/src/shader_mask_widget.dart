@@ -51,6 +51,9 @@ class ShaderMaskTransition extends StatefulWidget {
     required this.animation,
     required this.transition,
     required this.child,
+    this.onStart,
+    this.onComplete,
+    this.onProgress,
   });
 
   /// The route animation (0.0 → 1.0 on push, 1.0 → 0.0 on pop).
@@ -61,6 +64,16 @@ class ShaderMaskTransition extends StatefulWidget {
 
   /// The incoming page widget.
   final Widget child;
+
+  /// Called when the forward animation starts. Use it to trigger sound — the
+  /// app plays its own audio; this package bundles none.
+  final VoidCallback? onStart;
+
+  /// Called when the forward animation completes (reaches 1.0).
+  final VoidCallback? onComplete;
+
+  /// Called every animation tick with the raw `animation.value`.
+  final ValueChanged<double>? onProgress;
 
   @override
   State<ShaderMaskTransition> createState() => _ShaderMaskTransitionState();
@@ -81,10 +94,32 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
       _coverShader =
           ShaderRegistry.instance.createShader(widget.transition.shaderKey);
     }
+    widget.animation.addStatusListener(_onStatus);
+    if (widget.onProgress != null) {
+      widget.animation.addListener(_onTick);
+    }
   }
+
+  void _onStatus(AnimationStatus status) {
+    switch (status) {
+      case AnimationStatus.forward:
+        widget.onStart?.call();
+      case AnimationStatus.completed:
+        widget.onComplete?.call();
+      case AnimationStatus.dismissed:
+      case AnimationStatus.reverse:
+        break;
+    }
+  }
+
+  void _onTick() => widget.onProgress?.call(widget.animation.value);
 
   @override
   void dispose() {
+    widget.animation.removeStatusListener(_onStatus);
+    if (widget.onProgress != null) {
+      widget.animation.removeListener(_onTick);
+    }
     _pageShader?.dispose();
     _coverShader?.dispose();
     super.dispose();

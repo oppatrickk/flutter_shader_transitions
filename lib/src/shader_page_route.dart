@@ -29,6 +29,9 @@ class ShaderPageRoute<T> extends PageRouteBuilder<T> {
   ShaderPageRoute({
     required Widget page,
     this.transition = const DiamondTransition(),
+    VoidCallback? onStart,
+    VoidCallback? onComplete,
+    ValueChanged<double>? onProgress,
     super.settings,
   }) : super(
           // CRITICAL: keep the outgoing route rendered underneath.
@@ -39,7 +42,12 @@ class ShaderPageRoute<T> extends PageRouteBuilder<T> {
           // this window (clamped by ShaderMaskTransition).
           transitionDuration: transition.duration,
           reverseTransitionDuration: transition.duration,
-          transitionsBuilder: ShaderTransitionBuilders.create(transition),
+          transitionsBuilder: ShaderTransitionBuilders.create(
+            transition,
+            onStart: onStart,
+            onComplete: onComplete,
+            onProgress: onProgress,
+          ),
         );
 
   /// The shader transition rendered between routes.

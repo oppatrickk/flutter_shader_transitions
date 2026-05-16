@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 — Widget transitions + lifecycle hooks (additive)
+
+- `ShaderTransitionSwitcher` — an `AnimatedSwitcher` analog that runs a
+  `ShaderTransition` between two child widgets (not routes). Key your
+  children to trigger swaps.
+- `onStart` / `onComplete` / `onProgress` callbacks on `ShaderPageRoute`,
+  `ShaderTransitionBuilders.create`, and `ShaderTransitionSwitcher`. This is
+  the sound mechanism — play your own audio in `onStart`; the package adds
+  no audio dependency.
+- No breaking changes.
+
 ## 0.1.0 — API redesign (breaking)
 
 The single overloaded `ShaderTransitionConfig` is replaced by a sealed

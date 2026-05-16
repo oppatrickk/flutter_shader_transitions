@@ -35,6 +35,7 @@ export 'src/transition_config.dart';
 export 'src/shader_registry.dart' show ShaderRegistry;
 export 'src/shader_page_route.dart';
 export 'src/shader_transition_builders.dart';
+export 'src/shader_transition_switcher.dart';
 // shader_mask_widget.dart is an internal implementation detail.
 
 import 'package:flutter/widgets.dart';

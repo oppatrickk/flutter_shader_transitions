@@ -271,6 +271,38 @@ MaterialApp(
 
 > ⚠️ **`opaque: false` is required** for the outgoing page to show through the un-revealed area. `ShaderPageRoute` sets it for you; with go_router/auto_route you set it on the page. `ShaderPageTransitionsBuilder` is best paired with a `cover` (covered transitions don't need the route below to be visible).
 
+## Widget transitions
+
+`ShaderTransitionSwitcher` runs a transition between two widgets instead of
+routes — an `AnimatedSwitcher` analog. Key the children so swaps are detected:
+
+```dart
+ShaderTransitionSwitcher(
+  transition: const CircleTransition(),
+  child: KeyedSubtree(
+    key: ValueKey(index),
+    child: pages[index],
+  ),
+)
+```
+
+## Sound on transition
+
+The package bundles no audio. Use the `onStart` / `onComplete` / `onProgress`
+callbacks (available on `ShaderPageRoute`, `ShaderTransitionBuilders.create`,
+and `ShaderTransitionSwitcher`) and play audio with whatever package you
+already use:
+
+```dart
+Navigator.of(context).push(
+  ShaderPageRoute(
+    page: const NextPage(),
+    transition: const WipeTransition(),
+    onStart: () => audioPlayer.play(AssetSource('whoosh.mp3')),
+  ),
+);
+```
+
 ## Migrating from 0.0.x
 
 0.1.0 replaced the single `ShaderTransitionConfig` with a sealed

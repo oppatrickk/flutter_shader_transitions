@@ -54,8 +54,14 @@ class ShaderTransitionBuilders {
   ///
   /// The [ShaderMaskTransition] manages the [FragmentShader] lifecycle
   /// internally and falls back to [FadeTransition] if shaders were not
-  /// preloaded.
-  static RouteTransitionsBuilder create(ShaderTransition transition) {
+  /// preloaded. [onStart] / [onComplete] / [onProgress] are forwarded so the
+  /// app can play its own sound or react to progress.
+  static RouteTransitionsBuilder create(
+    ShaderTransition transition, {
+    VoidCallback? onStart,
+    VoidCallback? onComplete,
+    ValueChanged<double>? onProgress,
+  }) {
     return (
       BuildContext context,
       Animation<double> animation,
@@ -65,6 +71,9 @@ class ShaderTransitionBuilders {
       return ShaderMaskTransition(
         animation: animation,
         transition: transition,
+        onStart: onStart,
+        onComplete: onComplete,
+        onProgress: onProgress,
         child: child,
       );
     };
