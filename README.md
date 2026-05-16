@@ -2,7 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/shader_transitions.svg)](https://pub.dev/packages/shader_transitions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.16-02569B?logo=flutter)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.10-02569B?logo=flutter)](https://flutter.dev)
 
 GPU-accelerated, shader-based page transitions for Flutter — diamond grid, circle iris, and linear wipe with eight sweep directions, optional cover color, and a configurable hold for cinematic fade-through transitions.
 
@@ -26,7 +26,13 @@ GPU-accelerated, shader-based page transitions for Flutter — diamond grid, cir
 |:---:|:---:|:---:|
 | ![diamond](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/diamond.gif) | ![circle](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/circle.gif) | ![wipe](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/wipe.gif) |
 
-Cover color with a 600 ms hold ("fade to black, hold, reveal new scene"):
+**Diamond** — a grid of diamond cells. A soft band sweeps along the chosen direction; within the band each cell fills from its center outward, so the edge reads as a shimmer of growing diamonds rather than a hard line. `cellSize` controls the grid density.
+
+**Circle iris** — a circular reveal that grows from the screen center outward, feathered at the edge for a clean anti-aliased ring. Duration is the only knob.
+
+**Wipe** — a straight feathered edge that travels across the screen in any of eight directions (four axis-aligned, four diagonal). `softness` sets the feather width; `0` gives a hard edge.
+
+Cover color with a 600 ms hold ("fade to black, hold, reveal new scene") — the incoming page is hidden while a flat color wipes in, holds, then wipes back out to reveal the destination:
 
 ![cover-fade](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/cover-fade.gif)
 
@@ -40,7 +46,7 @@ Or in `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  shader_transitions: ^0.0.1
+  shader_transitions: ^0.0.3
 ```
 
 ## Quick start

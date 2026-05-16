@@ -31,12 +31,12 @@ import 'transition_config.dart';
 ///
 /// 1. **Wipe in** — the cover color sweeps over the outgoing page using a
 ///    masked [ColoredBox]. The incoming page is fully hidden.
-/// 2. **Hold** — for `config.coverHold` the screen is held at full cover.
-///    No wipe motion happens.
+/// 2. **Hold** — for `config.coverDuration` the screen is held at full
+///    cover. No wipe motion happens.
 /// 3. **Wipe out** — the incoming page sweeps over the cover.
 ///
-/// When `config.coverHold == Duration.zero`, phases 1 and 3 abut directly:
-/// a continuous cross-fade through the color with no hold frame.
+/// When `config.coverDuration == Duration.zero`, phases 1 and 3 abut
+/// directly: a continuous cross-fade through the color with no hold frame.
 ///
 /// ## Uniform layout
 ///

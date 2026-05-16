@@ -18,21 +18,40 @@ enum TransitionType {
 /// corner or edge of the screen the sweep originates from. For
 /// [TransitionType.circle], this parameter is ignored.
 enum SweepDirection {
+  /// Diagonal sweep starting at the top-left corner, ending bottom-right.
   topLeftToBottomRight,
+
+  /// Diagonal sweep starting at the bottom-right corner, ending top-left.
   bottomRightToTopLeft,
+
+  /// Horizontal sweep from the left edge to the right edge.
   leftToRight,
+
+  /// Horizontal sweep from the right edge to the left edge.
   rightToLeft,
+
+  /// Vertical sweep from the top edge to the bottom edge.
   topToBottom,
+
+  /// Vertical sweep from the bottom edge to the top edge.
   bottomToTop,
+
+  /// Diagonal sweep starting at the top-right corner, ending bottom-left.
   topRightToBottomLeft,
+
+  /// Diagonal sweep starting at the bottom-left corner, ending top-right.
   bottomLeftToTopRight,
 }
 
-/// Extension providing the normalized 2D direction vector for each [SweepDirection].
+/// Provides the (non-normalized) 2D direction vector for each
+/// [SweepDirection].
 ///
-/// The vector components may not be unit-length (e.g. diagonal is (1,1)).
-/// [ShaderMaskTransition] normalizes them before passing to the GLSL shader.
+/// Vector components are `-1`, `0`, or `1`; diagonals are `(±1, ±1)` and so
+/// are not unit-length. [ShaderMaskTransition] normalizes them before passing
+/// `uDirection` to the GLSL shader. `+y` points down (Flutter screen space).
 extension SweepDirectionVector on SweepDirection {
+  /// The raw `(dx, dy)` vector for this direction. See the extension docs for
+  /// the coordinate convention and normalization note.
   (double, double) get vector => switch (this) {
         SweepDirection.topLeftToBottomRight => (1.0, 1.0),
         SweepDirection.bottomRightToTopLeft => (-1.0, -1.0),

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.3
+
+- Lower the SDK floor to Dart 3.0 / Flutter 3.10 (was Dart 3.2 / Flutter 3.16). This is the lowest that supports the Dart 3 records & patterns used in `lib/` plus `ui.FragmentProgram.fromAsset` (stable since Flutter 3.7), widening compatibility for consumers.
+- Dartdoc: document every `SweepDirection` value and the `SweepDirectionVector` extension; fix stale `coverHold` references in `ShaderMaskTransition` docs (the field is `coverDuration`).
+- README: per-transition "how it works" explanations in the showcase; updated Flutter badge and install constraint.
+
 ## 0.0.2
 
 - Shorten pubspec `description` to fit within pub.dev's 60–180 character window (was 218 chars and failed the "Provide a valid pubspec.yaml" check).
