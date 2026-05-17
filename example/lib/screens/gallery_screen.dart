@@ -8,7 +8,7 @@ import 'destination_screen.dart';
 const double wideLayoutBreakpoint = 720;
 
 /// Which sealed [ShaderTransition] family a catalogue entry builds.
-enum DemoType { diamond, circle, wipe, clock, polygon, dissolve, fade }
+enum DemoType { diamond, circle, wipe, clock, polygon, dissolve, fade, bars }
 
 class TypeOption {
   const TypeOption({
@@ -75,6 +75,13 @@ const List<TypeOption> types = [
     icon: Icons.gradient,
     accent: Color(0xFF5E35B1),
     description: 'Uniform shader cross-fade.',
+  ),
+  TypeOption(
+    type: DemoType.bars,
+    label: 'Bars',
+    icon: Icons.view_week_outlined,
+    accent: Color(0xFF00838F),
+    description: 'Venetian-blind reveal; count parallel bars.',
   ),
 ];
 
@@ -356,11 +363,18 @@ class _TransitionEditorState extends State<TransitionEditor> {
         _size = 8;
       case DemoType.fade:
         _durationMs = 400;
+      case DemoType.bars:
+        _direction = SweepDirection.leftToRight;
+        _durationMs = 600;
+        _size = 4;
+        _count = 6;
     }
   }
 
   bool get _hasCount =>
-      widget.type == DemoType.clock || widget.type == DemoType.polygon;
+      widget.type == DemoType.clock ||
+      widget.type == DemoType.polygon ||
+      widget.type == DemoType.bars;
 
   ShaderTransition _currentTransition() {
     final duration = Duration(milliseconds: _durationMs.round());
@@ -413,6 +427,14 @@ class _TransitionEditorState extends State<TransitionEditor> {
           invert: _invert,
           cover: cover,
         ),
+      DemoType.bars => BarsTransition(
+          direction: _direction,
+          duration: duration,
+          count: _count,
+          softness: _size,
+          invert: _invert,
+          cover: cover,
+        ),
     };
   }
 
@@ -420,18 +442,24 @@ class _TransitionEditorState extends State<TransitionEditor> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final option = optionFor(widget.type);
-    final hasDirection =
-        widget.type == DemoType.diamond || widget.type == DemoType.wipe;
+    final hasDirection = widget.type == DemoType.diamond ||
+        widget.type == DemoType.wipe ||
+        widget.type == DemoType.bars;
     final hasSize = widget.type == DemoType.diamond ||
         widget.type == DemoType.wipe ||
-        widget.type == DemoType.dissolve;
+        widget.type == DemoType.dissolve ||
+        widget.type == DemoType.bars;
     final sizeLabel = switch (widget.type) {
       DemoType.diamond => 'Cell size',
       DemoType.dissolve => 'Grain',
       _ => 'Softness',
     };
-    final countLabel = widget.type == DemoType.clock ? 'Sectors' : 'Sides';
-    final countMin = widget.type == DemoType.clock ? 1 : 3;
+    final countLabel = switch (widget.type) {
+      DemoType.clock => 'Sectors',
+      DemoType.bars => 'Bars',
+      _ => 'Sides',
+    };
+    final countMin = widget.type == DemoType.polygon ? 3 : 1;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),

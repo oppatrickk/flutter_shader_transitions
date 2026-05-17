@@ -3,7 +3,7 @@ description: >-
   GPU-accelerated shader page transitions for Flutter — diamond, circle iris,
   and wipe with eight sweep directions, optional cover color, and a cinematic
   hold.
-version: 0.3.1
+version: 0.3.2
 homepage: https://johnpatrickprieto.com
 repository: https://github.com/oppatrickk/flutter_shader_transitions
 issue_tracker: https://github.com/oppatrickk/flutter_shader_transitions/issues
@@ -40,3 +40,4 @@ flutter:
     - shaders/polygon.frag
     - shaders/dissolve.frag
     - shaders/fade.frag
+    - shaders/bars.frag

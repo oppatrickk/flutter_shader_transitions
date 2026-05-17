@@ -40,6 +40,7 @@ class ShaderRegistry {
     'polygon',
     'dissolve',
     'fade',
+    'bars',
   ];
 
   /// Compiles and caches all shader programs.

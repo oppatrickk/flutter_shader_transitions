@@ -103,6 +103,7 @@ class TransitionCover {
 /// - [PolygonTransition] — a regular-polygon iris.
 /// - [DissolveTransition] — a noise-grain dissolve.
 /// - [FadeShaderTransition] — a uniform cross-fade.
+/// - [BarsTransition] — a venetian-blind reveal.
 ///
 /// Every transition shares [duration], an optional [cover], and an [invert]
 /// flag. Pass one to [ShaderPageRoute], [ShaderTransitions] factories, or
@@ -341,4 +342,38 @@ final class FadeShaderTransition extends ShaderTransition {
 
   @override
   String get shaderKey => 'fade';
+}
+
+/// A venetian-blind reveal: [count] parallel bars along [direction] each run
+/// the same wipe simultaneously.
+///
+/// (For a true content *slide*, use Flutter's built-in `SlideTransition` —
+/// a slide moves the child, which an alpha-mask transition can't express.
+/// For a corner wipe, use [WipeTransition] with a diagonal [SweepDirection].)
+///
+/// ```dart
+/// const BarsTransition(count: 8, direction: SweepDirection.topToBottom)
+/// ```
+final class BarsTransition extends ShaderTransition {
+  /// Number of parallel bars. Clamped to ≥ 1 (1 ≈ a plain wipe).
+  final int count;
+
+  /// Edge softness of each bar, in logical pixels.
+  final double softness;
+
+  /// Axis the bars wipe along.
+  final SweepDirection direction;
+
+  /// Creates a venetian-blind transition.
+  const BarsTransition({
+    this.count = 6,
+    this.softness = 4.0,
+    this.direction = SweepDirection.leftToRight,
+    super.duration = const Duration(milliseconds: 600),
+    super.cover,
+    super.invert,
+  });
+
+  @override
+  String get shaderKey => 'bars';
 }

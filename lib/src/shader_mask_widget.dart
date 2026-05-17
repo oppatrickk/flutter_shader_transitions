@@ -250,6 +250,19 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
           sectors: 1.0,
           sides: 4.0,
         );
+      case BarsTransition():
+        final (dx, dy) = tr.direction.vector;
+        return (
+          dx: dx,
+          dy: dy,
+          ox: 0.5,
+          oy: 0.5,
+          feather: tr.softness,
+          cellSize: 0.0,
+          rotation: 0.0,
+          sectors: tr.count.toDouble(), // bars reuses uSectors as count
+          sides: 4.0,
+        );
     }
   }
 

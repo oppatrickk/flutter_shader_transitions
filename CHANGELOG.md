@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.2 — Bars / venetian-blind transition (additive)
+
+- `BarsTransition` — `count` parallel bars along `direction` reveal in
+  parallel for a venetian-blind effect (reuses the shared `uSectors`
+  uniform as the bar count; no uniform layout change).
+- Example gallery gains a Bars entry.
+- **Not added, by design:** a content *slide* moves the child — that's a
+  transform, not an alpha mask, so it's outside this package's
+  `ShaderMask(dstIn)` core; use Flutter's built-in `SlideTransition`.
+  A *corner wipe* is already `WipeTransition` with a diagonal
+  `SweepDirection`. *Combination* presets are already expressible by
+  pairing any transition with a `TransitionCover`.
+- No breaking changes.
+
 ## 0.3.1 — Dissolve + fade transitions (additive)
 
 - `DissolveTransition` — noise-grain dissolve; `grain` controls how soft
