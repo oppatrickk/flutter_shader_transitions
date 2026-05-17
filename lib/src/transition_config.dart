@@ -101,6 +101,8 @@ class TransitionCover {
 /// - [WipeTransition] — a straight feathered edge in a [SweepDirection].
 /// - [ClockTransition] — a radial sweep, optionally multi-sector.
 /// - [PolygonTransition] — a regular-polygon iris.
+/// - [DissolveTransition] — a noise-grain dissolve.
+/// - [FadeShaderTransition] — a uniform cross-fade.
 ///
 /// Every transition shares [duration], an optional [cover], and an [invert]
 /// flag. Pass one to [ShaderPageRoute], [ShaderTransitions] factories, or
@@ -301,4 +303,42 @@ final class PolygonTransition extends ShaderTransition {
 
   @override
   String get shaderKey => 'polygon';
+}
+
+/// A noise-driven dissolve: pixels reveal in a random grain as progress
+/// rises. [grain] widens the per-pixel fade window (softer, less speckled).
+///
+/// ```dart
+/// const DissolveTransition(grain: 12)
+/// ```
+final class DissolveTransition extends ShaderTransition {
+  /// Softness of the dissolve grain. Larger values fade pixels in over a
+  /// wider progress window (smoother); near-zero is a hard speckle.
+  final double grain;
+
+  /// Creates a dissolve transition.
+  const DissolveTransition({
+    this.grain = 8.0,
+    super.duration = const Duration(milliseconds: 600),
+    super.cover,
+    super.invert,
+  });
+
+  @override
+  String get shaderKey => 'dissolve';
+}
+
+/// A uniform shader cross-fade. Equivalent in look to a [FadeTransition] but
+/// driven by the same shader pipeline (so it composes with [cover] and the
+/// lifecycle callbacks like every other [ShaderTransition]).
+final class FadeShaderTransition extends ShaderTransition {
+  /// Creates a uniform cross-fade transition.
+  const FadeShaderTransition({
+    super.duration = const Duration(milliseconds: 400),
+    super.cover,
+    super.invert,
+  });
+
+  @override
+  String get shaderKey => 'fade';
 }

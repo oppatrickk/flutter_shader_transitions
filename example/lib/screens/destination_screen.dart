@@ -16,6 +16,8 @@ class DestinationScreen extends StatelessWidget {
         WipeTransition() => 'Wipe',
         ClockTransition() => 'Clock',
         PolygonTransition() => 'Polygon',
+        DissolveTransition() => 'Dissolve',
+        FadeShaderTransition() => 'Fade',
       };
 
   String _directionName(SweepDirection d) => switch (d) {
@@ -35,6 +37,8 @@ class DestinationScreen extends StatelessWidget {
         WipeTransition() => const Color(0xFF00897B),
         ClockTransition() => const Color(0xFFEF6C00),
         PolygonTransition() => const Color(0xFFAD1457),
+        DissolveTransition() => const Color(0xFF455A64),
+        FadeShaderTransition() => const Color(0xFF5E35B1),
       };
 
   IconData get _icon => switch (transition) {
@@ -43,6 +47,8 @@ class DestinationScreen extends StatelessWidget {
         WipeTransition() => Icons.swipe_right_outlined,
         ClockTransition() => Icons.access_time,
         PolygonTransition() => Icons.pentagon_outlined,
+        DissolveTransition() => Icons.grain,
+        FadeShaderTransition() => Icons.gradient,
       };
 
   /// Per-type detail rows for the info panel.
@@ -80,6 +86,17 @@ class DestinationScreen extends StatelessWidget {
           ('Sides', '${t.sides}'),
           ('Duration', '${t.duration.inMilliseconds} ms'),
           ('Invert', t.invert ? 'Contracting' : 'Expanding'),
+        ];
+      case DissolveTransition():
+        return [
+          ('Grain', t.grain.toStringAsFixed(0)),
+          ('Duration', '${t.duration.inMilliseconds} ms'),
+          ('Invert', t.invert ? 'Yes' : 'No'),
+        ];
+      case FadeShaderTransition():
+        return [
+          ('Duration', '${t.duration.inMilliseconds} ms'),
+          ('Invert', t.invert ? 'Fade out' : 'Fade in'),
         ];
     }
   }

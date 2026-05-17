@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1 — Dissolve + fade transitions (additive)
+
+- `DissolveTransition` — noise-grain dissolve; `grain` controls how soft
+  the speckle fades in.
+- `FadeShaderTransition` — uniform shader cross-fade that composes with
+  `cover` and the lifecycle callbacks like every other transition.
+- Example gallery gains Dissolve and Fade entries. No breaking changes.
+
 ## 0.3.0 — Clock + polygon transitions (additive)
 
 - `ClockTransition` — a radial sweep around `origin`, optionally fanned into

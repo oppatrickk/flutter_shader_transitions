@@ -38,6 +38,8 @@ class ShaderRegistry {
     'wipe',
     'clock',
     'polygon',
+    'dissolve',
+    'fade',
   ];
 
   /// Compiles and caches all shader programs.

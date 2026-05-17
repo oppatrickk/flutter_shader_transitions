@@ -226,6 +226,30 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
           sectors: 1.0,
           sides: tr.sides.toDouble(),
         );
+      case DissolveTransition():
+        return (
+          dx: 1.0,
+          dy: 0.0,
+          ox: 0.5,
+          oy: 0.5,
+          feather: tr.grain,
+          cellSize: 0.0,
+          rotation: 0.0,
+          sectors: 1.0,
+          sides: 4.0,
+        );
+      case FadeShaderTransition():
+        return (
+          dx: 1.0,
+          dy: 0.0,
+          ox: 0.5,
+          oy: 0.5,
+          feather: 0.0,
+          cellSize: 0.0,
+          rotation: 0.0,
+          sectors: 1.0,
+          sides: 4.0,
+        );
     }
   }
 

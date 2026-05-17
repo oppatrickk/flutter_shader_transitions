@@ -8,7 +8,7 @@ import 'destination_screen.dart';
 const double wideLayoutBreakpoint = 720;
 
 /// Which sealed [ShaderTransition] family a catalogue entry builds.
-enum DemoType { diamond, circle, wipe, clock, polygon }
+enum DemoType { diamond, circle, wipe, clock, polygon, dissolve, fade }
 
 class TypeOption {
   const TypeOption({
@@ -61,6 +61,20 @@ const List<TypeOption> types = [
     icon: Icons.pentagon_outlined,
     accent: Color(0xFFAD1457),
     description: 'Regular-polygon iris; high sides ≈ circle.',
+  ),
+  TypeOption(
+    type: DemoType.dissolve,
+    label: 'Dissolve',
+    icon: Icons.grain,
+    accent: Color(0xFF455A64),
+    description: 'Noise-grain dissolve; grain controls softness.',
+  ),
+  TypeOption(
+    type: DemoType.fade,
+    label: 'Fade',
+    icon: Icons.gradient,
+    accent: Color(0xFF5E35B1),
+    description: 'Uniform shader cross-fade.',
   ),
 ];
 
@@ -337,6 +351,11 @@ class _TransitionEditorState extends State<TransitionEditor> {
       case DemoType.polygon:
         _durationMs = 700;
         _count = 6;
+      case DemoType.dissolve:
+        _durationMs = 600;
+        _size = 8;
+      case DemoType.fade:
+        _durationMs = 400;
     }
   }
 
@@ -383,6 +402,17 @@ class _TransitionEditorState extends State<TransitionEditor> {
           invert: _invert,
           cover: cover,
         ),
+      DemoType.dissolve => DissolveTransition(
+          duration: duration,
+          grain: _size,
+          invert: _invert,
+          cover: cover,
+        ),
+      DemoType.fade => FadeShaderTransition(
+          duration: duration,
+          invert: _invert,
+          cover: cover,
+        ),
     };
   }
 
@@ -392,10 +422,14 @@ class _TransitionEditorState extends State<TransitionEditor> {
     final option = optionFor(widget.type);
     final hasDirection =
         widget.type == DemoType.diamond || widget.type == DemoType.wipe;
-    final hasSize =
-        widget.type == DemoType.diamond || widget.type == DemoType.wipe;
-    final sizeLabel =
-        widget.type == DemoType.diamond ? 'Cell size' : 'Softness';
+    final hasSize = widget.type == DemoType.diamond ||
+        widget.type == DemoType.wipe ||
+        widget.type == DemoType.dissolve;
+    final sizeLabel = switch (widget.type) {
+      DemoType.diamond => 'Cell size',
+      DemoType.dissolve => 'Grain',
+      _ => 'Softness',
+    };
     final countLabel = widget.type == DemoType.clock ? 'Sectors' : 'Sides';
     final countMin = widget.type == DemoType.clock ? 1 : 3;
 
