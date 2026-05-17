@@ -12,13 +12,14 @@ GPU-accelerated, shader-based page transitions for Flutter — diamond grid, cir
 
 ## Features
 
-- **Three shader transitions** out of the box — `diamond` grid, `circle` iris, `wipe` linear.
-- **Eight sweep directions** — four axis-aligned, four diagonals; all reach every corner regardless of direction.
-- **Optional cover color** — replace the cross-fade through the outgoing page with a flat color (e.g. black) for a true cinematic fade.
-- **Configurable cover hold** — pause on a full-cover frame between the cover-in and page-in wipes; pass a `Duration`.
-- **Drop-in for Navigator, go_router, and auto_route** — `ShaderPageRoute` for Navigator, `ShaderTransitionBuilders.create(config)` for the others.
+- **Eight shader transitions** — `DiamondTransition`, `CircleTransition`, `WipeTransition`, `ClockTransition`, `PolygonTransition`, `DissolveTransition`, `FadeShaderTransition`, `BarsTransition`. One sealed `ShaderTransition` API.
+- **Shared, clear parameter vocabulary** — `origin`, `direction`, `feather`/`softness`, `rotation`, `invert`, `sectors`/`sides`/`count`; the same name means the same thing everywhere.
+- **Eight sweep directions** — four axis-aligned, four diagonals; all reach every corner.
+- **Optional cover color + hold** — `TransitionCover(color:, hold:)` for a cinematic fade-through (cover wipe-in → hold → page wipe-out).
+- **Routes, widgets, and app-wide** — `ShaderPageRoute` (Navigator), `ShaderTransitionBuilders.create` (go_router/auto_route), `ShaderPageTransitionsBuilder` (`pageTransitionsTheme`), `ShaderTransitionSwitcher` (between widgets).
+- **Lifecycle callbacks** — `onStart` / `onComplete` / `onProgress`; play your own sound (no audio dependency bundled).
 - **Preload-once design** — `FragmentProgram` compilation is a one-time `async` cost at app startup, not per-route.
-- **Impeller-friendly** — uses `#version 460 core` + `flutter/runtime_effect.glsl`, the modern Flutter shader path.
+- **Impeller-friendly** — `#version 460 core` + `flutter/runtime_effect.glsl`, the modern Flutter shader path.
 
 ## Showcase
 
@@ -30,7 +31,17 @@ GPU-accelerated, shader-based page transitions for Flutter — diamond grid, cir
 
 **Circle iris** — a circular reveal that grows from the screen center outward, feathered at the edge for a clean anti-aliased ring. Duration is the only knob.
 
-**Wipe** — a straight feathered edge that travels across the screen in any of eight directions (four axis-aligned, four diagonal). `softness` sets the feather width; `0` gives a hard edge.
+**Wipe** — a straight feathered edge that travels across the screen in any of eight directions (four axis-aligned, four diagonal). `softness` sets the feather width; `0` gives a hard edge. `rotation` tilts the edge.
+
+**Clock** — a radial hand sweeping around `origin`; `sectors` fans it into a multi-blade pinwheel, `invert` reverses the direction.
+
+**Polygon** — a regular n-gon iris from `origin`. `sides: 3` is a triangle; high counts approximate `CircleTransition`. `invert` contracts instead of expands.
+
+**Dissolve** — a pseudo-random per-pixel grain that fills in as progress rises; `grain` controls how soft the speckle fades.
+
+**Fade** — a uniform cross-fade, but routed through the same pipeline so it still composes with `cover` and the lifecycle callbacks.
+
+**Bars** — a venetian blind: `count` parallel bars along `direction` wipe in parallel.
 
 Cover color with a 600 ms hold ("fade to black, hold, reveal new scene") — the incoming page is hidden while a flat color wipes in, holds, then wipes back out to reveal the destination:
 
@@ -212,6 +223,19 @@ Per-type fields:
 | `WipeTransition` | `softness` | `double` | `4.0` (px; 0 = hard edge) |
 | | `direction` | `SweepDirection` | `leftToRight` |
 | | `rotation` | `double` | `0.0` (radians) |
+| `ClockTransition` | `origin` | `Alignment` | `Alignment.center` |
+| | `sectors` | `int` | `1` |
+| | `rotation` | `double` | `0.0` |
+| | `feather` | `double` | `2.0` |
+| `PolygonTransition` | `origin` | `Alignment` | `Alignment.center` |
+| | `sides` | `int` | `6` (min 3) |
+| | `feather` | `double` | `2.0` |
+| | `rotation` | `double` | `0.0` |
+| `DissolveTransition` | `grain` | `double` | `8.0` |
+| `FadeShaderTransition` | _(shared fields only)_ | | |
+| `BarsTransition` | `count` | `int` | `6` |
+| | `softness` | `double` | `4.0` |
+| | `direction` | `SweepDirection` | `leftToRight` |
 
 `SweepDirection` values: `topLeftToBottomRight`, `topRightToBottomLeft`, `bottomLeftToTopRight`, `bottomRightToTopLeft`, `leftToRight`, `rightToLeft`, `topToBottom`, `bottomToTop`.
 

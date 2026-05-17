@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.0 — Stable
+
+API freeze. No code changes vs 0.3.2 — this marks the sealed
+`ShaderTransition` API and the eight-transition catalogue (diamond, circle,
+wipe, clock, polygon, dissolve, fade, bars) as stable under semantic
+versioning.
+
+- README documents the full catalogue (features, showcase, per-type config
+  reference).
+- pana: 150/160 (50/50 static analysis, 40/40 dependencies, WASM-ready,
+  lower-bound-constraint compatible). The remaining points are the
+  screenshots bucket, pending recorded GIFs.
+
 ## 0.3.2 — Bars / venetian-blind transition (additive)
 
 - `BarsTransition` — `count` parallel bars along `direction` reveal in
