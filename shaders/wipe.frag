@@ -18,6 +18,8 @@ uniform float uFeather;
 uniform float uCellSize;
 uniform float uRotation;
 uniform float uInvert;
+uniform float uSectors; // unused by wipe (shared layout v3)
+uniform float uSides;   // unused by wipe (shared layout v3)
 
 out vec4 fragColor;
 

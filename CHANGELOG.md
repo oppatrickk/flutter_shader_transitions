@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 — Clock + polygon transitions (additive)
+
+- `ClockTransition` — a radial sweep around `origin`, optionally fanned into
+  `sectors` identical wedges; `invert` reverses the sweep direction.
+- `PolygonTransition` — a regular n-gon iris (`sides` ≥ 3; high counts look
+  circular); `origin`, `feather`, `rotation`, `invert` apply.
+- Internal shader uniform layout extended to v3 (`uSectors`, `uSides`); the
+  public parameter vocabulary is unchanged.
+- Example gallery gains Clock and Polygon entries with a sectors/sides
+  control. No breaking changes.
+
 ## 0.2.0 — Widget transitions + lifecycle hooks (additive)
 
 - `ShaderTransitionSwitcher` — an `AnimatedSwitcher` analog that runs a

@@ -32,7 +32,13 @@ class ShaderRegistry {
   // and from consuming applications.
   static const String _packagePrefix = 'packages/shader_transitions/';
 
-  static const List<String> _shaderKeys = ['diamond', 'circle', 'wipe'];
+  static const List<String> _shaderKeys = [
+    'diamond',
+    'circle',
+    'wipe',
+    'clock',
+    'polygon',
+  ];
 
   /// Compiles and caches all shader programs.
   ///

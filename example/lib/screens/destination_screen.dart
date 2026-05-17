@@ -14,6 +14,8 @@ class DestinationScreen extends StatelessWidget {
         DiamondTransition() => 'Diamond',
         CircleTransition() => 'Circle',
         WipeTransition() => 'Wipe',
+        ClockTransition() => 'Clock',
+        PolygonTransition() => 'Polygon',
       };
 
   String _directionName(SweepDirection d) => switch (d) {
@@ -31,12 +33,16 @@ class DestinationScreen extends StatelessWidget {
         DiamondTransition() => const Color(0xFF7C4DFF),
         CircleTransition() => const Color(0xFF00BCD4),
         WipeTransition() => const Color(0xFF00897B),
+        ClockTransition() => const Color(0xFFEF6C00),
+        PolygonTransition() => const Color(0xFFAD1457),
       };
 
   IconData get _icon => switch (transition) {
         DiamondTransition() => Icons.diamond_outlined,
         CircleTransition() => Icons.radio_button_unchecked,
         WipeTransition() => Icons.swipe_right_outlined,
+        ClockTransition() => Icons.access_time,
+        PolygonTransition() => Icons.pentagon_outlined,
       };
 
   /// Per-type detail rows for the info panel.
@@ -62,6 +68,18 @@ class DestinationScreen extends StatelessWidget {
           ('Duration', '${t.duration.inMilliseconds} ms'),
           ('Softness', '${t.softness.toStringAsFixed(0)} px'),
           ('Invert', t.invert ? 'Yes' : 'No'),
+        ];
+      case ClockTransition():
+        return [
+          ('Sectors', '${t.sectors}'),
+          ('Duration', '${t.duration.inMilliseconds} ms'),
+          ('Invert', t.invert ? 'Counter-clockwise' : 'Clockwise'),
+        ];
+      case PolygonTransition():
+        return [
+          ('Sides', '${t.sides}'),
+          ('Duration', '${t.duration.inMilliseconds} ms'),
+          ('Invert', t.invert ? 'Contracting' : 'Expanding'),
         ];
     }
   }

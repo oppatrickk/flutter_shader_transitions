@@ -31,7 +31,7 @@ import 'transition_config.dart';
 /// With `cover.hold == Duration.zero` phases 1 and 3 abut: a continuous
 /// cross-fade through the color.
 ///
-/// ## Uniform layout v2
+/// ## Uniform layout v3
 ///
 /// Every `.frag` shares this layout, set unconditionally (unused slots are
 /// harmless):
@@ -44,6 +44,8 @@ import 'transition_config.dart';
 /// 8    uCellSize   : float  diamond grid px
 /// 9    uRotation   : float  radians
 /// 10   uInvert     : float  0/1 reverse flag
+/// 11   uSectors    : float  clock sector count
+/// 12   uSides      : float  polygon side count
 /// ```
 class ShaderMaskTransition extends StatefulWidget {
   const ShaderMaskTransition({
@@ -147,7 +149,7 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
     return (cover: 1.0, page: (t - phase2End) / (1.0 - phase2End));
   }
 
-  /// Per-type geometry for the unified uniform block.
+  /// Per-type geometry for the unified uniform block (layout v3).
   ({
     double dx,
     double dy,
@@ -156,6 +158,8 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
     double feather,
     double cellSize,
     double rotation,
+    double sectors,
+    double sides,
   }) _geometry() {
     final tr = widget.transition;
     switch (tr) {
@@ -169,6 +173,8 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
           feather: tr.feather,
           cellSize: tr.cellSize,
           rotation: 0.0,
+          sectors: 1.0,
+          sides: 4.0,
         );
       case WipeTransition():
         final (dx, dy) = tr.direction.vector;
@@ -180,6 +186,8 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
           feather: tr.softness,
           cellSize: 0.0,
           rotation: tr.rotation,
+          sectors: 1.0,
+          sides: 4.0,
         );
       case CircleTransition():
         return (
@@ -191,6 +199,32 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
           feather: tr.feather,
           cellSize: 0.0,
           rotation: 0.0,
+          sectors: 1.0,
+          sides: 64.0,
+        );
+      case ClockTransition():
+        return (
+          dx: 1.0,
+          dy: 0.0,
+          ox: (tr.origin.x + 1.0) / 2.0,
+          oy: (tr.origin.y + 1.0) / 2.0,
+          feather: tr.feather,
+          cellSize: 0.0,
+          rotation: tr.rotation,
+          sectors: tr.sectors.toDouble(),
+          sides: 4.0,
+        );
+      case PolygonTransition():
+        return (
+          dx: 1.0,
+          dy: 0.0,
+          ox: (tr.origin.x + 1.0) / 2.0,
+          oy: (tr.origin.y + 1.0) / 2.0,
+          feather: tr.feather,
+          cellSize: 0.0,
+          rotation: tr.rotation,
+          sectors: 1.0,
+          sides: tr.sides.toDouble(),
         );
     }
   }
@@ -212,6 +246,8 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
     shader.setFloat(8, g.cellSize); // uCellSize
     shader.setFloat(9, g.rotation); // uRotation
     shader.setFloat(10, widget.transition.invert ? 1.0 : 0.0); // uInvert
+    shader.setFloat(11, g.sectors); // uSectors
+    shader.setFloat(12, g.sides); // uSides
   }
 
   Widget _maskedLayer({

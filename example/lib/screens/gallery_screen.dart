@@ -8,7 +8,7 @@ import 'destination_screen.dart';
 const double wideLayoutBreakpoint = 720;
 
 /// Which sealed [ShaderTransition] family a catalogue entry builds.
-enum DemoType { diamond, circle, wipe }
+enum DemoType { diamond, circle, wipe, clock, polygon }
 
 class TypeOption {
   const TypeOption({
@@ -47,6 +47,20 @@ const List<TypeOption> types = [
     icon: Icons.swipe_right_outlined,
     accent: Color(0xFF00897B),
     description: 'Linear feathered wipe in any of 8 directions.',
+  ),
+  TypeOption(
+    type: DemoType.clock,
+    label: 'Clock',
+    icon: Icons.access_time,
+    accent: Color(0xFFEF6C00),
+    description: 'Radial sweep, optionally fanned into sectors.',
+  ),
+  TypeOption(
+    type: DemoType.polygon,
+    label: 'Polygon',
+    icon: Icons.pentagon_outlined,
+    accent: Color(0xFFAD1457),
+    description: 'Regular-polygon iris; high sides ≈ circle.',
   ),
 ];
 
@@ -295,6 +309,7 @@ class _TransitionEditorState extends State<TransitionEditor> {
   SweepDirection _direction = SweepDirection.leftToRight;
   double _durationMs = 700;
   double _size = 40; // cell size (diamond) / softness (wipe)
+  int _count = 6; // sectors (clock) / sides (polygon)
   bool _invert = false;
   Color? _color;
   double _coverHoldMs = 0;
@@ -316,8 +331,17 @@ class _TransitionEditorState extends State<TransitionEditor> {
         _direction = SweepDirection.leftToRight;
         _durationMs = 600;
         _size = 6;
+      case DemoType.clock:
+        _durationMs = 700;
+        _count = 1;
+      case DemoType.polygon:
+        _durationMs = 700;
+        _count = 6;
     }
   }
+
+  bool get _hasCount =>
+      widget.type == DemoType.clock || widget.type == DemoType.polygon;
 
   ShaderTransition _currentTransition() {
     final duration = Duration(milliseconds: _durationMs.round());
@@ -347,6 +371,18 @@ class _TransitionEditorState extends State<TransitionEditor> {
           invert: _invert,
           cover: cover,
         ),
+      DemoType.clock => ClockTransition(
+          duration: duration,
+          sectors: _count,
+          invert: _invert,
+          cover: cover,
+        ),
+      DemoType.polygon => PolygonTransition(
+          duration: duration,
+          sides: _count,
+          invert: _invert,
+          cover: cover,
+        ),
     };
   }
 
@@ -354,10 +390,14 @@ class _TransitionEditorState extends State<TransitionEditor> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final option = optionFor(widget.type);
-    final hasDirection = widget.type != DemoType.circle;
-    final hasSize = widget.type != DemoType.circle;
+    final hasDirection =
+        widget.type == DemoType.diamond || widget.type == DemoType.wipe;
+    final hasSize =
+        widget.type == DemoType.diamond || widget.type == DemoType.wipe;
     final sizeLabel =
         widget.type == DemoType.diamond ? 'Cell size' : 'Softness';
+    final countLabel = widget.type == DemoType.clock ? 'Sectors' : 'Sides';
+    final countMin = widget.type == DemoType.clock ? 1 : 3;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -435,13 +475,29 @@ class _TransitionEditorState extends State<TransitionEditor> {
               onChanged: (v) => setState(() => _size = v),
             ),
           ],
+          if (_hasCount) ...[
+            const SizedBox(height: 4),
+            Text('$countLabel: $_count', style: theme.textTheme.labelLarge),
+            Slider(
+              value: _count.toDouble().clamp(countMin.toDouble(), 12.0),
+              min: countMin.toDouble(),
+              max: 12,
+              divisions: 12 - countMin,
+              label: '$_count',
+              onChanged: (v) => setState(() => _count = v.round()),
+            ),
+          ],
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Invert'),
             subtitle: Text(
-              widget.type == DemoType.circle
-                  ? 'Contracting iris instead of expanding'
-                  : 'Reverse which side reveals first',
+              switch (widget.type) {
+                DemoType.circle ||
+                DemoType.polygon =>
+                  'Contracting instead of expanding',
+                DemoType.clock => 'Counter-clockwise sweep',
+                _ => 'Reverse which side reveals first',
+              },
               style: theme.textTheme.bodySmall,
             ),
             value: _invert,

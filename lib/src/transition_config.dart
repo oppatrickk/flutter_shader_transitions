@@ -99,6 +99,8 @@ class TransitionCover {
 /// - [DiamondTransition] — a sweeping grid of diamond cells.
 /// - [CircleTransition] — a circular iris reveal from [CircleTransition.origin].
 /// - [WipeTransition] — a straight feathered edge in a [SweepDirection].
+/// - [ClockTransition] — a radial sweep, optionally multi-sector.
+/// - [PolygonTransition] — a regular-polygon iris.
 ///
 /// Every transition shares [duration], an optional [cover], and an [invert]
 /// flag. Pass one to [ShaderPageRoute], [ShaderTransitions] factories, or
@@ -227,4 +229,76 @@ final class WipeTransition extends ShaderTransition {
 
   @override
   String get shaderKey => 'wipe';
+}
+
+/// A radial "clock" sweep around [origin], optionally fanned into [sectors]
+/// identical wedges.
+///
+/// ```dart
+/// const ClockTransition(sectors: 4)            // 4-blade fan
+/// const ClockTransition(invert: true)          // counter-clockwise
+/// ```
+final class ClockTransition extends ShaderTransition {
+  /// The pivot the hand sweeps around. `Alignment.center` is the screen
+  /// center; corners pivot a clock-wipe from that corner.
+  final Alignment origin;
+
+  /// Number of identical radial wedges. `1` is a single hand; higher values
+  /// fan the sweep into a multi-blade pinwheel. Clamped to ≥ 1.
+  final int sectors;
+
+  /// Start angle of the sweep, in radians.
+  final double rotation;
+
+  /// Edge softness of the sweeping hand, in logical pixels.
+  final double feather;
+
+  /// Creates a clock/radial sweep transition.
+  const ClockTransition({
+    this.origin = Alignment.center,
+    this.sectors = 1,
+    this.rotation = 0.0,
+    this.feather = 2.0,
+    super.duration = const Duration(milliseconds: 700),
+    super.cover,
+    super.invert,
+  });
+
+  @override
+  String get shaderKey => 'clock';
+}
+
+/// A regular-polygon iris reveal from [origin]. A high [sides] count
+/// approximates [CircleTransition].
+///
+/// ```dart
+/// const PolygonTransition(sides: 3)            // triangle iris
+/// const PolygonTransition(sides: 6, rotation: 0.5)
+/// ```
+final class PolygonTransition extends ShaderTransition {
+  /// The point the polygon iris emanates from.
+  final Alignment origin;
+
+  /// Polygon side count. Clamped to ≥ 3; large values look circular.
+  final int sides;
+
+  /// Edge softness of the polygon outline, in logical pixels.
+  final double feather;
+
+  /// Polygon orientation, in radians.
+  final double rotation;
+
+  /// Creates a polygon iris transition.
+  const PolygonTransition({
+    this.origin = Alignment.center,
+    this.sides = 6,
+    this.feather = 2.0,
+    this.rotation = 0.0,
+    super.duration = const Duration(milliseconds: 700),
+    super.cover,
+    super.invert,
+  });
+
+  @override
+  String get shaderKey => 'polygon';
 }
