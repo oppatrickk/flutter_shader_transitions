@@ -3,8 +3,8 @@ description: >-
   GPU-accelerated shader page transitions for Flutter — diamond, circle iris,
   and wipe with eight sweep directions, optional cover color, and a cinematic
   hold.
-version: 1.1.0
-homepage: https://johnpatrickprieto.com
+version: 1.1.1
+homepage: https://flutter-shader-transition.web.app
 repository: https://github.com/oppatrickk/flutter_shader_transitions
 issue_tracker: https://github.com/oppatrickk/flutter_shader_transitions/issues
 

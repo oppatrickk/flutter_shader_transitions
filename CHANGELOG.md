@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.1 — Homepage points to the demo site
+
+- The pub.dev homepage link is now the demo site,
+  https://flutter-shader-transition.web.app: showcase, playground, and API
+  reference.
+- Example: a pub.dev link next to the GitHub one in the app bar (labeled
+  on wide screens, icons on phones).
+
 ## 1.1.0 — iOS swipe back + named constructors (additive)
 
 - Named constructors on `ShaderTransition` for all eight transitions:
