@@ -12,6 +12,27 @@
 - Package tests added for the constructors.
 - No breaking changes — the concrete classes and `ShaderTransitions`
   factories are unchanged.
+- **iOS swipe back.** `ShaderPageRoute` now pops with the platform edge
+  swipe on iOS and macOS, scrubbing the shader transition backwards under
+  the finger (Cupertino thresholds; refused for the first route,
+  `PopScope(canPop: false)`, and mid-transition; RTL-aware). New
+  `swipeBack` parameter on `ShaderPageRoute` and the `ShaderTransitions.*`
+  shortcuts: `null` follows the platform, `true`/`false` forces it.
+  `onStart` / `onComplete` don't fire while a swipe is scrubbing the route.
+- **Minimum Flutter is now 3.22 (Dart 3.4)**, up from 3.10 — the swipe
+  relies on `PageRoute.popGestureEnabled`. Apps on older Flutter keep
+  resolving 1.0.0.
+- Verified on iOS (Impeller/Metal, iOS 26.5 and 27 simulators): all eight
+  shaders compile and render with correct geometry, and the device build
+  compiles for arm64.
+- Example: iOS runner migrated to the UIScene lifecycle (required when
+  building with the iOS 27 SDK), minimum iOS 15.0, Swift Package Manager
+  integration, and a real bundle ID
+  (`com.johnpatrickprieto.shadertransitions.example`) so it can be signed
+  for a physical iPhone. The example now needs Flutter 3.38+.
+- Example: on-device tests in `example/integration_test/` read back pixels
+  to check every transition's mask and the back swipe on a real GPU
+  backend.
 
 ## 1.0.0 — Stable
 

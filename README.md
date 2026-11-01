@@ -2,7 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/shader_transitions.svg)](https://pub.dev/packages/shader_transitions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.10-02569B?logo=flutter)](https://flutter.dev)
+[![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.22-02569B?logo=flutter)](https://flutter.dev)
 
 GPU-accelerated, shader-based page transitions for Flutter — diamond grid, circle iris, and linear wipe with eight sweep directions, optional cover color, and a configurable hold for cinematic fade-through transitions.
 
@@ -17,6 +17,7 @@ GPU-accelerated, shader-based page transitions for Flutter — diamond grid, cir
 - **Eight sweep directions** — four axis-aligned, four diagonals; all reach every corner.
 - **Optional cover color + hold** — `TransitionCover(color:, hold:)` for a cinematic fade-through (cover wipe-in → hold → page wipe-out).
 - **Routes, widgets, and app-wide** — `ShaderPageRoute` (Navigator), `ShaderTransitionBuilders.create` (go_router/auto_route), `ShaderPageTransitionsBuilder` (`pageTransitionsTheme`), `ShaderTransitionSwitcher` (between widgets).
+- **iOS swipe back** — on iOS and macOS, `ShaderPageRoute` pops with the platform edge swipe, scrubbing the shader transition backwards under the finger.
 - **Lifecycle callbacks** — `onStart` / `onComplete` / `onProgress`; play your own sound (no audio dependency bundled).
 - **Preload-once design** — `FragmentProgram` compilation is a one-time `async` cost at app startup, not per-route.
 - **Impeller-friendly** — `#version 460 core` + `flutter/runtime_effect.glsl`, the modern Flutter shader path.
@@ -312,6 +313,32 @@ MaterialApp(
 ```
 
 > ⚠️ **`opaque: false` is required** for the outgoing page to show through the un-revealed area. `ShaderPageRoute` sets it for you; with go_router/auto_route you set it on the page. `ShaderPageTransitionsBuilder` is best paired with a `cover` (covered transitions don't need the route below to be visible).
+
+## Swipe back (iOS)
+
+On iOS and macOS, `ShaderPageRoute` supports the platform back swipe: drag
+from the leading screen edge and the transition plays in reverse under your
+finger. Release past halfway (or flick) to pop; otherwise the page settles
+back. Thresholds match `CupertinoPageRoute`, and the swipe is refused
+wherever a pop would be — the first route, `PopScope(canPop: false)`, or
+mid-transition. Right-to-left locales swipe from the right edge.
+
+`onStart` / `onComplete` stay quiet while the finger is scrubbing, so a
+"whoosh" doesn't play just because the user started to swipe. `onProgress`
+keeps reporting.
+
+```dart
+ShaderPageRoute(
+  page: const NextPage(),
+  transition: const ShaderTransition.circle(),
+  swipeBack: false, // null (default) = on for iOS/macOS, off elsewhere
+)
+```
+
+The swipe is specific to `ShaderPageRoute` (and the `ShaderTransitions.*`
+shortcuts). go_router's `CustomTransitionPage` and
+`ShaderPageTransitionsBuilder` don't own the route's animation, so they keep
+the plain back button.
 
 ## Widget transitions
 

@@ -15,12 +15,13 @@ topics:
   - navigation
   - ui
 
-# Floor is Dart 3.0 / Flutter 3.10 — the lowest that supports the Dart 3
-# records & patterns used in lib/ (SweepDirectionVector, _setUniforms) plus
-# ui.FragmentProgram.fromAsset (stable since Flutter 3.7).
+# Floor is Flutter 3.22 / Dart 3.4 — the first with PageRoute.popGestureEnabled,
+# which ShaderPageRoute's iOS back swipe uses to refuse the gesture wherever a
+# pop would be refused (PopScope, first route, fullscreen dialog). lib/ also
+# needs Dart 3 records & patterns and ui.FragmentProgram.fromAsset.
 environment:
-  sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=3.10.0"
+  sdk: ">=3.4.0 <4.0.0"
+  flutter: ">=3.22.0"
 
 dependencies:
   flutter:

@@ -54,6 +54,10 @@ class DestinationScreen extends StatelessWidget {
         BarsTransition() => Icons.view_week_outlined,
       };
 
+  // ShaderPageRoute enables its back swipe on these platforms by default.
+  static bool _hasSwipeBack(TargetPlatform platform) =>
+      platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
+
   /// Per-type detail rows for the info panel.
   List<(String, String)> _details() {
     final t = transition;
@@ -161,6 +165,16 @@ class DestinationScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
+              if (_hasSwipeBack(theme.platform)) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Or swipe from the left edge to scrub it back.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

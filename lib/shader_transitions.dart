@@ -74,6 +74,7 @@ class ShaderTransitions {
     double feather = 0.0,
     bool invert = false,
     TransitionCover? cover,
+    bool? swipeBack,
     RouteSettings? settings,
   }) {
     return ShaderPageRoute<T>(
@@ -86,6 +87,7 @@ class ShaderTransitions {
         invert: invert,
         cover: cover,
       ),
+      swipeBack: swipeBack,
       settings: settings,
     );
   }
@@ -99,6 +101,7 @@ class ShaderTransitions {
     double feather = 2.0,
     bool invert = false,
     TransitionCover? cover,
+    bool? swipeBack,
     RouteSettings? settings,
   }) {
     return ShaderPageRoute<T>(
@@ -110,6 +113,7 @@ class ShaderTransitions {
         invert: invert,
         cover: cover,
       ),
+      swipeBack: swipeBack,
       settings: settings,
     );
   }
@@ -124,6 +128,7 @@ class ShaderTransitions {
     double rotation = 0.0,
     bool invert = false,
     TransitionCover? cover,
+    bool? swipeBack,
     RouteSettings? settings,
   }) {
     return ShaderPageRoute<T>(
@@ -136,6 +141,7 @@ class ShaderTransitions {
         invert: invert,
         cover: cover,
       ),
+      swipeBack: swipeBack,
       settings: settings,
     );
   }

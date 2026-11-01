@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'shader_back_gesture.dart';
 import 'shader_transition_builders.dart';
 import 'transition_config.dart';
 
@@ -25,6 +26,13 @@ import 'transition_config.dart';
 /// (black flash) because Flutter skips routes below an opaque top route.
 /// Wherever the shader outputs `alpha == 0`, the incoming page is
 /// transparent and the outgoing page (or [TransitionCover] color) shows.
+///
+/// ## Swipe back
+///
+/// On iOS and macOS the route supports the platform back swipe: drag from
+/// the leading screen edge and the shader transition scrubs backwards under
+/// the finger, then pops or restores on release — the same thresholds as
+/// `CupertinoPageRoute`. Control it with [swipeBack].
 class ShaderPageRoute<T> extends PageRouteBuilder<T> {
   ShaderPageRoute({
     required Widget page,
@@ -32,6 +40,7 @@ class ShaderPageRoute<T> extends PageRouteBuilder<T> {
     VoidCallback? onStart,
     VoidCallback? onComplete,
     ValueChanged<double>? onProgress,
+    this.swipeBack,
     super.settings,
   }) : super(
           // CRITICAL: keep the outgoing route rendered underneath.
@@ -52,4 +61,46 @@ class ShaderPageRoute<T> extends PageRouteBuilder<T> {
 
   /// The shader transition rendered between routes.
   final ShaderTransition transition;
+
+  /// Whether an edge swipe pops this route (the iOS back gesture).
+  ///
+  /// `null` (the default) follows the platform, like [MaterialPageRoute]:
+  /// enabled when [ThemeData.platform] is iOS or macOS, disabled elsewhere.
+  /// Even when enabled, the swipe is refused wherever a pop would be — the
+  /// first route, a `PopScope(canPop: false)`, or mid-transition.
+  final bool? swipeBack;
+
+  bool _swipeBackEnabled(BuildContext context) =>
+      swipeBack ??
+      switch (Theme.of(context).platform) {
+        TargetPlatform.iOS || TargetPlatform.macOS => true,
+        _ => false,
+      };
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final transitioned =
+        super.buildTransitions(context, animation, secondaryAnimation, child);
+    if (!_swipeBackEnabled(context)) return transitioned;
+    return ShaderBackGestureDetector(
+      enabledCallback: () => popGestureEnabled,
+      onStartPopGesture: _startPopGesture,
+      child: transitioned,
+    );
+  }
+
+  ShaderBackGestureController _startPopGesture() {
+    assert(popGestureEnabled);
+    return ShaderBackGestureController(
+      navigator: navigator!,
+      controller: controller!, // protected access — this route owns it
+      getIsCurrent: () => isCurrent,
+      getIsActive: () => isActive,
+    );
+  }
 }

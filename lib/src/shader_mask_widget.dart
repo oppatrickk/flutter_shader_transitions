@@ -102,7 +102,28 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
     }
   }
 
+  ModalRoute<dynamic>? _route;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _route = ModalRoute.of(context);
+  }
+
+  /// Whether a back swipe is scrubbing the route this transition animates.
+  /// That's the user rewinding, not a transition starting or finishing, so
+  /// [ShaderMaskTransition.onStart] / [ShaderMaskTransition.onComplete] stay
+  /// quiet. (A `ShaderTransitionSwitcher` inside the page has its own
+  /// animation and is unaffected.)
+  bool get _scrubbedByBackSwipe {
+    final route = _route;
+    return route != null &&
+        identical(route.animation, widget.animation) &&
+        (route.navigator?.userGestureInProgress ?? false);
+  }
+
   void _onStatus(AnimationStatus status) {
+    if (_scrubbedByBackSwipe) return;
     switch (status) {
       case AnimationStatus.forward:
         widget.onStart?.call();

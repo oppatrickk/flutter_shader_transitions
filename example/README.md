@@ -14,6 +14,28 @@ flutter run
 
 > If you've edited any `.frag` file in `../shaders/`, run `flutter clean && flutter pub get` first — Flutter caches compiled shader assets and hot reload won't pick up GLSL changes on its own.
 
+Requires Flutter 3.38+: the iOS runner uses the UIScene lifecycle, which apps built against the iOS 27 SDK must adopt.
+
+## On-device render tests
+
+Unit tests can't load fragment shaders, so [`integration_test/shader_render_test.dart`](integration_test/shader_render_test.dart) runs on a real GPU backend (Impeller/Metal on iOS). It freezes each transition at a known progress, reads the rendered pixels back, and checks the mask geometry. It also checks the iOS back swipe mid-drag on the real mask, then drives the gallery through a push/pop of every transition.
+
+```sh
+cd example
+flutter test integration_test -d <device-or-simulator-id>
+```
+
+## On a physical iPhone
+
+The iOS bundle ID is `com.johnpatrickprieto.shadertransitions.example`. With the device connected (unlocked, Developer Mode on, computer trusted):
+
+```sh
+flutter run -d <iphone-id>                      # the gallery
+flutter test integration_test -d <iphone-id>    # the render tests
+```
+
+Flutter signs with the Apple Development identity in your keychain automatically. If you're not on the owner's team, open `ios/Runner.xcworkspace`, select the Runner target → Signing & Capabilities, pick your team, and change the bundle ID to one you own.
+
 ## Layout
 
 - **≥ 720 px wide** → two-column master/detail. Type list on the left, live editor on the right.
@@ -31,7 +53,7 @@ In the editor pane (or page) you can tweak:
 - **Cover color** — None / Black / White / Indigo / Red swatches. Picking a color flips the transition into the three-phase cover flow.
 - **Cover duration** — slider, 0–3000 ms. Appears once a cover color is set; this is the hold time between the cover wipe-in and the page wipe-out, clamped internally to ≤ 75% of `transitionDuration`.
 
-The **Test transition** button at the bottom pushes a `DestinationScreen` with the current config so you see the full forward animation; the back arrow plays the reverse.
+The **Test transition** button at the bottom pushes a `DestinationScreen` with the current config so you see the full forward animation; the back arrow plays the reverse. On iOS and macOS you can also swipe from the left edge to scrub the transition backwards under your finger.
 
 ## Key files
 
