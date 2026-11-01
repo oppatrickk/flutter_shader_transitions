@@ -1,20 +1,20 @@
 # Screenshots
 
-Drop the following GIFs here once recorded. They're referenced from the package and example READMEs via raw.githubusercontent.com URLs so they render on pub.dev:
+The demo GIFs embedded in the package and example READMEs (via raw.githubusercontent.com URLs, so they also render on pub.dev).
 
-| File | What to capture |
+| File | Shows |
 |---|---|
-| `hero.gif`       | 5–8 s reel cycling diamond → circle → wipe → cover variant. Used in both READMEs as the hero image. |
-| `diamond.gif`    | Diamond grid, `topLeftToBottomRight`, `transitionDuration: 800ms`, `size: 40`. |
-| `circle.gif`     | Circle iris, `transitionDuration: 700ms`. |
-| `wipe.gif`       | Linear wipe, `leftToRight`, `transitionDuration: 600ms`, `softness: 6`. |
-| `cover-fade.gif` | Wipe `leftToRight` with `color: Colors.black, coverDuration: Duration(milliseconds: 600)`. Shows the three-phase cover flow. |
+| `hero.gif` | The two game scenes (`example/assets/scene_*.jpg`) cycling diamond → circle iris → diagonal wipe → circle with a black cover and hold. |
+| `diamond.gif`, `circle.gif`, `wipe.gif`, `clock.gif`, `polygon.gif`, `dissolve.gif`, `fade.gif`, `bars.gif` | One transition each on a 320 px square: push the dark Flutter-logo page, hold, pop back. |
+| `cover-fade.gif` | Wipe with a black `TransitionCover` and a 600 ms hold. |
 
-## Recording tips
+## Regenerating
 
-- **Aspect / resolution**: 540×960 (phone portrait) or similar. Both READMEs render fine at that size.
-- **Frame rate**: 24 fps is plenty for these wipes.
-- **File size**: aim for ≤ 2 MB each so the README pane on pub.dev loads quickly.
-- **Source**: run `example/` and capture the gallery → destination flow with the matching config in the editor. The example is laid out specifically so each capture is one tap.
+All of them come from one script that renders the real shaders frame by frame — no device or screen recording:
 
-Once a file is committed, the links in the root `README.md` and `example/README.md` resolve automatically (no path edits needed).
+```sh
+cd example
+flutter test --enable-impeller tool/readme_gifs_test.dart
+```
+
+It writes every GIF here in about 15 seconds. Frames are rendered at 2× and downsampled, encoded at 25 fps with one shared palette per GIF, and only changed pixels are stored per frame, which keeps each file under 1 MB. Edit the timelines in [`example/tool/readme_gifs_test.dart`](../example/tool/readme_gifs_test.dart) to change what's shown.

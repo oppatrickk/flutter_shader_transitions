@@ -33,6 +33,13 @@
 - Example: on-device tests in `example/integration_test/` read back pixels
   to check every transition's mask and the back swipe on a real GPU
   backend.
+- Fix: with a `TransitionCover`, feather-wide slivers of both pages showed at
+  the screen edges while the screen should be fully covered (the masks are
+  only half-opaque along an edge sitting on the screen border at progress
+  0 and 1). A finished cover now paints unmasked and a page whose wipe hasn't
+  started is hidden.
+- README: demo GIFs for every transition plus a hero reel, rendered from the
+  real shaders by `example/tool/readme_gifs_test.dart`.
 
 ## 1.0.0 — Stable
 

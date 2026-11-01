@@ -422,6 +422,33 @@ void main() {
         (0.75, 0.5): Px.green,
       });
     });
+
+    testWidgets('cover: no page slivers at the screen edges', (tester) async {
+      // A wide feather makes a half-opaque edge strip easy to hit.
+      const t = ShaderTransition.wipe(
+        softness: 20,
+        duration: Duration(milliseconds: 1000),
+        cover: TransitionCover(
+          color: _green,
+          hold: Duration(milliseconds: 400),
+        ),
+      );
+      // Phases: cover wipe [0, .3), hold [.3, .7), page wipe [.7, 1].
+      const left = 0.5 / 1000, right = 1 - 0.5 / 1000;
+      _expectProbes(await _render(tester, t, 0.15), {
+        (left, 0.5): Px.green, // incoming page not started: hidden
+        (right, 0.5): Px.red,
+      });
+      _expectProbes(await _render(tester, t, 0.5), {
+        (left, 0.5): Px.green, // fully covered hold
+        (0.5, 0.5): Px.green,
+        (right, 0.5): Px.green,
+      });
+      _expectProbes(await _render(tester, t, 0.85), {
+        (left, 0.5): Px.blue,
+        (right, 0.5): Px.green, // cover finished: no outgoing page
+      });
+    });
   });
 
   testWidgets('back swipe scrubs the real shader mask', (tester) async {

@@ -6,7 +6,7 @@
 
 GPU-accelerated, shader-based page transitions for Flutter — diamond grid, circle iris, and linear wipe with eight sweep directions, optional cover color, and a configurable hold for cinematic fade-through transitions.
 
-<!-- Demo GIF (hero.gif) — record via scripts/record-demos.md, then re-add: ![hero](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/hero.gif) -->
+![Diamond, circle iris, wipe, and cover-to-black transitions between two game scenes](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/hero.gif)
 
 ---
 
@@ -24,12 +24,15 @@ GPU-accelerated, shader-based page transitions for Flutter — diamond grid, cir
 
 ## Showcase
 
-<!-- Demo GIFs (diamond.gif, circle.gif, wipe.gif, …) — record via scripts/record-demos.md, then re-add a table here. -->
-<!--
+Each clip pushes a page with the transition, then pops it (the reverse animation).
+
 | Diamond | Circle iris | Wipe |
 |:---:|:---:|:---:|
-| ![diamond](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/diamond.gif) | ![circle](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/circle.gif) | ![wipe](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/wipe.gif) |
--->
+| ![Diamond transition](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/diamond.gif) | ![Circle iris transition](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/circle.gif) | ![Wipe transition](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/wipe.gif) |
+| **Clock** | **Polygon** | **Dissolve** |
+| ![Clock transition](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/clock.gif) | ![Polygon transition](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/polygon.gif) | ![Dissolve transition](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/dissolve.gif) |
+| **Fade** | **Bars** | **Cover + hold** |
+| ![Fade transition](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/fade.gif) | ![Bars transition](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/bars.gif) | ![Wipe with a black cover and hold](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/cover-fade.gif) |
 
 **Diamond** — a grid of diamond cells. A soft band sweeps along the chosen direction; within the band each cell fills from its center outward, so the edge reads as a shimmer of growing diamonds rather than a hard line. `cellSize` controls the grid density.
 
@@ -47,9 +50,7 @@ GPU-accelerated, shader-based page transitions for Flutter — diamond grid, cir
 
 **Bars** — a venetian blind: `count` parallel bars along `direction` wipe in parallel.
 
-Cover color with a 600 ms hold ("fade to black, hold, reveal new scene") — the incoming page is hidden while a flat color wipes in, holds, then wipes back out to reveal the destination.
-
-<!-- Demo GIF (cover-fade.gif) — record via scripts/record-demos.md, then re-add: ![cover-fade](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/cover-fade.gif) -->
+**Cover + hold** — a wipe with a black `TransitionCover` and a 600 ms hold ("fade to black, hold, reveal new scene"): the incoming page is hidden while a flat color wipes in, holds, then wipes back out to reveal the destination.
 
 ## Installation
 

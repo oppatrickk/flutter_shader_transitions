@@ -351,18 +351,30 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
         }
 
         final phases = _phaseProgresses(widget.animation.value);
+        // At a phase's endpoints a feathered mask is only half-opaque along
+        // its edge (the edge straddles the screen border), which would leak
+        // slivers of both pages through a "fully covered" hold. So a
+        // finished cover is painted unmasked, and a page whose wipe hasn't
+        // started is hidden. The Opacity stays in the tree either way so the
+        // page subtree is never rebuilt mid-transition.
         return Stack(
           fit: StackFit.expand,
           children: [
-            _maskedLayer(
-              shader: _coverShader!,
-              progress: phases.cover,
-              child: ColoredBox(color: cover.color),
-            ),
-            _maskedLayer(
-              shader: _pageShader!,
-              progress: phases.page,
-              child: child!,
+            if (phases.cover >= 1.0)
+              ColoredBox(color: cover.color)
+            else
+              _maskedLayer(
+                shader: _coverShader!,
+                progress: phases.cover,
+                child: ColoredBox(color: cover.color),
+              ),
+            Opacity(
+              opacity: phases.page <= 0.0 ? 0.0 : 1.0,
+              child: _maskedLayer(
+                shader: _pageShader!,
+                progress: phases.page,
+                child: child!,
+              ),
             ),
           ],
         );
