@@ -68,7 +68,7 @@ Or in `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  shader_transitions: ^1.0.0
+  shader_transitions: ^1.1.0
 ```
 
 > **Upgrading from 0.0.x?** The config API changed — see [Migrating from 0.0.x](#migrating-from-00x).

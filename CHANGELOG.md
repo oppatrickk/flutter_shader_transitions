@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — iOS swipe back + named constructors (additive)
 
 - Named constructors on `ShaderTransition` for all eight transitions:
   `ShaderTransition.diamond()`, `.circle()`, `.wipe()`, `.clock()`,
