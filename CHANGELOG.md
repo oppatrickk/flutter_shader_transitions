@@ -10,8 +10,9 @@
   `transition: .diamond()`.
 - README, library docs, and the example gallery use the named constructors.
 - Package tests added for the constructors.
-- No breaking changes — the concrete classes and `ShaderTransitions`
-  factories are unchanged.
+- Package logo and app icon in `doc/brand/` (SVG sources, PNG exports, and
+  the script that generates them). The README shows the logo and links the
+  live demo at https://flutter-shader-transition.web.app.
 - **iOS swipe back.** `ShaderPageRoute` now pops with the platform edge
   swipe on iOS and macOS, scrubbing the shader transition backwards under
   the finger (Cupertino thresholds; refused for the first route,
@@ -33,13 +34,25 @@
 - Example: on-device tests in `example/integration_test/` read back pixels
   to check every transition's mask and the back swipe on a real GPU
   backend.
+- Example: a GitHub button in the app bar (adds `url_launcher` to the
+  example only). On the web, `?transition=<name>` opens that transition's
+  editor. Builds can pass `--dart-define` values to show the package
+  version and commit (`SHADER_TRANSITIONS_VERSION`,
+  `SHADER_TRANSITIONS_COMMIT`) and a link back to a site (`SITE_HOME_URL`);
+  the demo site uses all three.
 - Fix: with a `TransitionCover`, feather-wide slivers of both pages showed at
   the screen edges while the screen should be fully covered (the masks are
   only half-opaque along an edge sitting on the screen border at progress
   0 and 1). A finished cover now paints unmasked and a page whose wipe hasn't
   started is hidden.
+- Fix: once a transition finishes, the page paints without the shader mask,
+  so pixels that settle just below full opacity (dissolve grain, clock and
+  bars seams, a wipe's trailing edge) can't leave a faint copy of the
+  previous page showing through.
 - README: demo GIFs for every transition plus a hero reel, rendered from the
   real shaders by `example/tool/readme_gifs_test.dart`.
+- No breaking changes — the concrete classes and `ShaderTransitions`
+  factories are unchanged.
 
 ## 1.0.0 — Stable
 

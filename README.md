@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/doc/brand/logo-512.png" width="120" alt="shader_transitions logo: a diamond of smaller diamonds that grow from left to right">
+</p>
+
 # shader_transitions
 
 [![pub package](https://img.shields.io/pub/v/shader_transitions.svg)](https://pub.dev/packages/shader_transitions)
@@ -5,6 +9,8 @@
 [![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.22-02569B?logo=flutter)](https://flutter.dev)
 
 GPU-accelerated, shader-based page transitions for Flutter — diamond grid, circle iris, and linear wipe with eight sweep directions, optional cover color, and a configurable hold for cinematic fade-through transitions.
+
+**Live demo:** [flutter-shader-transition.web.app](https://flutter-shader-transition.web.app). Try every transition in your browser and adjust its settings.
 
 ![Diamond, circle iris, wipe, and cover-to-black transitions between two game scenes](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/hero.gif)
 
@@ -24,7 +30,7 @@ GPU-accelerated, shader-based page transitions for Flutter — diamond grid, cir
 
 ## Showcase
 
-Each clip pushes a page with the transition, then pops it (the reverse animation).
+Each clip pushes a page with the transition, then pops it (the reverse animation). To try them yourself, open the [live demo](https://flutter-shader-transition.web.app).
 
 | Diamond | Circle iris | Wipe |
 |:---:|:---:|:---:|

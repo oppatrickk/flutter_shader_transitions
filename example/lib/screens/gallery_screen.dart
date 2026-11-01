@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:shader_transitions/shader_transitions.dart';
+import 'package:url_launcher/link.dart';
 
 import 'destination_screen.dart';
 
 // Below this width (logical px) the gallery uses page navigation instead of
 // the two-column master/detail layout.
 const double wideLayoutBreakpoint = 720;
+
+final Uri repositoryUrl =
+    Uri.parse('https://github.com/oppatrickk/flutter_shader_transitions');
+
+// The demo site's build passes these with --dart-define. They're empty when
+// you run the example yourself, since the package then comes from your
+// checkout and has no single version to show.
+const String packageVersion =
+    String.fromEnvironment('SHADER_TRANSITIONS_VERSION');
+const String packageCommit =
+    String.fromEnvironment('SHADER_TRANSITIONS_COMMIT');
+const String siteHomeUrl = String.fromEnvironment('SITE_HOME_URL');
 
 /// Which sealed [ShaderTransition] family a catalogue entry builds.
 enum DemoType { diamond, circle, wipe, clock, polygon, dissolve, fade, bars }
@@ -101,6 +114,31 @@ class GalleryScreen extends StatefulWidget {
 class _GalleryScreenState extends State<GalleryScreen> {
   DemoType? _selectedType;
 
+  @override
+  void initState() {
+    super.initState();
+    // On the web, ?transition=<name> opens that transition directly (the demo
+    // site's showcase links here).
+    final linked =
+        DemoType.values.asNameMap()[Uri.base.queryParameters['transition']];
+    if (linked == null) return;
+    _selectedType = linked;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // The narrow layout has no editor pane, so open the editor page. No
+      // transition: following the link should land on the editor itself.
+      if (mounted &&
+          MediaQuery.sizeOf(context).width < wideLayoutBreakpoint) {
+        Navigator.of(context).push(
+          PageRouteBuilder<void>(
+            pageBuilder: (_, __, ___) => EditorPage(type: linked),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ),
+        );
+      }
+    });
+  }
+
   void _push(BuildContext context, ShaderTransition transition) {
     Navigator.of(context).push(
       ShaderPageRoute(
@@ -120,8 +158,31 @@ class _GalleryScreenState extends State<GalleryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: siteHomeUrl.isEmpty
+            ? null
+            : Link(
+                uri: Uri.base.resolve(siteHomeUrl),
+                target: LinkTarget.self,
+                builder: (context, followLink) => IconButton(
+                  tooltip: 'Back to the showcase',
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: followLink,
+                ),
+              ),
         title: const Text('Shader Transitions'),
         centerTitle: true,
+        actions: [
+          Link(
+            uri: repositoryUrl,
+            target: LinkTarget.blank,
+            builder: (context, followLink) => IconButton(
+              tooltip: 'Source on GitHub',
+              icon: const Icon(Icons.code),
+              onPressed: followLink,
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -186,9 +247,10 @@ class TypeList extends StatelessWidget {
     final theme = Theme.of(context);
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: types.length,
+      itemCount: types.length + (packageVersion.isEmpty ? 0 : 1),
       separatorBuilder: (_, __) => const SizedBox(height: 4),
       itemBuilder: (context, index) {
+        if (index == types.length) return const VersionFooter();
         final option = types[index];
         return ListTile(
           leading: Container(
@@ -217,6 +279,26 @@ class TypeList extends StatelessWidget {
           onTap: () => onSelect(option.type),
         );
       },
+    );
+  }
+}
+
+/// The package version and commit this build runs, when the build passed them.
+class VersionFooter extends StatelessWidget {
+  const VersionFooter({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final commit =
+        packageCommit.length >= 7 ? ' · ${packageCommit.substring(0, 7)}' : '';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Text(
+        'shader_transitions $packageVersion$commit',
+        style: theme.textTheme.bodySmall
+            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+      ),
     );
   }
 }

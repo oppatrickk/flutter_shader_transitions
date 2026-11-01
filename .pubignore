@@ -38,3 +38,10 @@ migrate_working_dir/
 # Demo GIFs: the READMEs load them from GitHub via raw URLs, so they don't
 # need to be in the package.
 /screenshots/
+# Brand assets: the README loads the logo the same way.
+/doc/brand/
+# Inputs for example/tool/readme_gifs_test.dart (the GIF recorder), not used
+# by the example app.
+/example/assets/
+# Local recording notes and scripts, not tracked in git.
+/scripts/
