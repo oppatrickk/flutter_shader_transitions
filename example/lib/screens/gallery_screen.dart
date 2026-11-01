@@ -10,6 +10,7 @@ const double wideLayoutBreakpoint = 720;
 
 final Uri repositoryUrl =
     Uri.parse('https://github.com/oppatrickk/flutter_shader_transitions');
+final Uri pubDevUrl = Uri.parse('https://pub.dev/packages/shader_transitions');
 
 // The demo site's build passes these with --dart-define. They're empty when
 // you run the example yourself, since the package then comes from your
@@ -172,16 +173,13 @@ class _GalleryScreenState extends State<GalleryScreen> {
         title: const Text('Shader Transitions'),
         centerTitle: true,
         actions: [
-          Link(
-            uri: repositoryUrl,
-            target: LinkTarget.blank,
-            builder: (context, followLink) => IconButton(
-              tooltip: 'Source on GitHub',
-              icon: const Icon(Icons.code),
-              onPressed: followLink,
-            ),
+          ProjectLink(
+            uri: pubDevUrl,
+            icon: Icons.inventory_2_outlined,
+            label: 'pub.dev',
           ),
-          const SizedBox(width: 4),
+          ProjectLink(uri: repositoryUrl, icon: Icons.code, label: 'GitHub'),
+          const SizedBox(width: 8),
         ],
       ),
       body: LayoutBuilder(
@@ -279,6 +277,44 @@ class TypeList extends StatelessWidget {
           onTap: () => onSelect(option.type),
         );
       },
+    );
+  }
+}
+
+/// An app bar link that opens in a new tab: icon and label when there's room,
+/// just the icon (with a tooltip) on narrow screens.
+class ProjectLink extends StatelessWidget {
+  const ProjectLink({
+    super.key,
+    required this.uri,
+    required this.icon,
+    required this.label,
+  });
+
+  final Uri uri;
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= wideLayoutBreakpoint;
+    return Link(
+      uri: uri,
+      target: LinkTarget.blank,
+      builder: (context, followLink) => wide
+          ? TextButton.icon(
+              onPressed: followLink,
+              icon: Icon(icon, size: 18),
+              label: Text(label),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+              ),
+            )
+          : IconButton(
+              tooltip: label,
+              icon: Icon(icon),
+              onPressed: followLink,
+            ),
     );
   }
 }
