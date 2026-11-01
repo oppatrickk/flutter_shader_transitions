@@ -385,49 +385,49 @@ class _TransitionEditorState extends State<TransitionEditor> {
             hold: Duration(milliseconds: _coverHoldMs.round()),
           );
     return switch (widget.type) {
-      DemoType.diamond => DiamondTransition(
+      DemoType.diamond => ShaderTransition.diamond(
           direction: _direction,
           duration: duration,
           cellSize: _size,
           invert: _invert,
           cover: cover,
         ),
-      DemoType.circle => CircleTransition(
+      DemoType.circle => ShaderTransition.circle(
           duration: duration,
           invert: _invert,
           cover: cover,
         ),
-      DemoType.wipe => WipeTransition(
+      DemoType.wipe => ShaderTransition.wipe(
           direction: _direction,
           duration: duration,
           softness: _size,
           invert: _invert,
           cover: cover,
         ),
-      DemoType.clock => ClockTransition(
+      DemoType.clock => ShaderTransition.clock(
           duration: duration,
           sectors: _count,
           invert: _invert,
           cover: cover,
         ),
-      DemoType.polygon => PolygonTransition(
+      DemoType.polygon => ShaderTransition.polygon(
           duration: duration,
           sides: _count,
           invert: _invert,
           cover: cover,
         ),
-      DemoType.dissolve => DissolveTransition(
+      DemoType.dissolve => ShaderTransition.dissolve(
           duration: duration,
           grain: _size,
           invert: _invert,
           cover: cover,
         ),
-      DemoType.fade => FadeShaderTransition(
+      DemoType.fade => ShaderTransition.fade(
           duration: duration,
           invert: _invert,
           cover: cover,
         ),
-      DemoType.bars => BarsTransition(
+      DemoType.bars => ShaderTransition.bars(
           direction: _direction,
           duration: duration,
           count: _count,

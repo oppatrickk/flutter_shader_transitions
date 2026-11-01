@@ -6,13 +6,13 @@
 
 GPU-accelerated, shader-based page transitions for Flutter — diamond grid, circle iris, and linear wipe with eight sweep directions, optional cover color, and a configurable hold for cinematic fade-through transitions.
 
-![hero](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/hero.gif)
+<!-- Demo GIF (hero.gif) — record via scripts/record-demos.md, then re-add: ![hero](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/hero.gif) -->
 
 ---
 
 ## Features
 
-- **Eight shader transitions** — `DiamondTransition`, `CircleTransition`, `WipeTransition`, `ClockTransition`, `PolygonTransition`, `DissolveTransition`, `FadeShaderTransition`, `BarsTransition`. One sealed `ShaderTransition` API.
+- **Eight shader transitions** — `ShaderTransition.diamond()`, `.circle()`, `.wipe()`, `.clock()`, `.polygon()`, `.dissolve()`, `.fade()`, `.bars()`. One sealed `ShaderTransition` API.
 - **Shared, clear parameter vocabulary** — `origin`, `direction`, `feather`/`softness`, `rotation`, `invert`, `sectors`/`sides`/`count`; the same name means the same thing everywhere.
 - **Eight sweep directions** — four axis-aligned, four diagonals; all reach every corner.
 - **Optional cover color + hold** — `TransitionCover(color:, hold:)` for a cinematic fade-through (cover wipe-in → hold → page wipe-out).
@@ -23,9 +23,12 @@ GPU-accelerated, shader-based page transitions for Flutter — diamond grid, cir
 
 ## Showcase
 
+<!-- Demo GIFs (diamond.gif, circle.gif, wipe.gif, …) — record via scripts/record-demos.md, then re-add a table here. -->
+<!--
 | Diamond | Circle iris | Wipe |
 |:---:|:---:|:---:|
 | ![diamond](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/diamond.gif) | ![circle](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/circle.gif) | ![wipe](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/wipe.gif) |
+-->
 
 **Diamond** — a grid of diamond cells. A soft band sweeps along the chosen direction; within the band each cell fills from its center outward, so the edge reads as a shimmer of growing diamonds rather than a hard line. `cellSize` controls the grid density.
 
@@ -43,9 +46,9 @@ GPU-accelerated, shader-based page transitions for Flutter — diamond grid, cir
 
 **Bars** — a venetian blind: `count` parallel bars along `direction` wipe in parallel.
 
-Cover color with a 600 ms hold ("fade to black, hold, reveal new scene") — the incoming page is hidden while a flat color wipes in, holds, then wipes back out to reveal the destination:
+Cover color with a 600 ms hold ("fade to black, hold, reveal new scene") — the incoming page is hidden while a flat color wipes in, holds, then wipes back out to reveal the destination.
 
-![cover-fade](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/cover-fade.gif)
+<!-- Demo GIF (cover-fade.gif) — record via scripts/record-demos.md, then re-add: ![cover-fade](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/cover-fade.gif) -->
 
 ## Installation
 
@@ -57,7 +60,7 @@ Or in `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  shader_transitions: ^0.1.0
+  shader_transitions: ^1.0.0
 ```
 
 > **Upgrading from 0.0.x?** The config API changed — see [Migrating from 0.0.x](#migrating-from-00x).
@@ -77,15 +80,21 @@ void main() async {
 }
 ```
 
-**2. Push a route** with one of the convenience factories:
+**2. Push a route.** `ShaderPageRoute` takes the page and any transition:
 
 ```dart
 Navigator.of(context).push(
-  ShaderTransitions.diamond(
+  ShaderPageRoute(
     page: const NextPage(),
-    direction: SweepDirection.topLeftToBottomRight,
+    transition: const ShaderTransition.diamond(),
   ),
 );
+```
+
+Type `ShaderTransition.` to see all eight: `.diamond()`, `.circle()`, `.wipe()`, `.clock()`, `.polygon()`, `.dissolve()`, `.fade()`, `.bars()`. If your app is on Dart 3.10+, dot shorthands let you drop the class name:
+
+```dart
+ShaderPageRoute(page: const NextPage(), transition: .circle())
 ```
 
 **3. With go_router** — wrap your page in `CustomTransitionPage` and pass `ShaderTransitionBuilders.create`. **`opaque: false` is required** so the outgoing page shows through the masked area:
@@ -99,7 +108,7 @@ GoRoute(
     opaque: false, // ← required
     transitionDuration: const Duration(milliseconds: 800),
     transitionsBuilder: ShaderTransitionBuilders.create(
-      const DiamondTransition(),
+      const ShaderTransition.diamond(),
     ),
   ),
 ),
@@ -107,9 +116,16 @@ GoRoute(
 
 ## Usage
 
-Every transition is a sealed `ShaderTransition`: `DiamondTransition`,
-`CircleTransition`, or `WipeTransition`. All share `duration`, an optional
-`cover`, and an `invert` flag.
+Every transition is a `ShaderTransition`, created with a named constructor —
+`ShaderTransition.diamond()`, `.circle()`, `.wipe()`, `.clock()`,
+`.polygon()`, `.dissolve()`, `.fade()`, or `.bars()`. Each returns the
+matching concrete class (`DiamondTransition`, `CircleTransition`, …), which
+you can also construct directly or match on in a `switch`. All share
+`duration`, an optional `cover`, and an `invert` flag.
+
+For diamond, circle, and wipe there is also a one-call route shortcut —
+`ShaderTransitions.diamond(page: ...)`, `.circle(...)`, `.wipe(...)` —
+shown below.
 
 ### Diamond grid
 
@@ -126,10 +142,10 @@ Navigator.of(context).push(
 );
 ```
 
-Or build the transition directly for full control:
+Or build the transition yourself and pass it to `ShaderPageRoute`:
 
 ```dart
-const DiamondTransition(
+const ShaderTransition.diamond(
   direction: SweepDirection.bottomLeftToTopRight,
   cellSize: 28.0,
   duration: Duration(milliseconds: 900),
@@ -178,7 +194,7 @@ fully covered between the wipe-in and wipe-out.
 Navigator.of(context).push(
   ShaderPageRoute(
     page: const NextPage(),
-    transition: const WipeTransition(
+    transition: const ShaderTransition.wipe(
       direction: SweepDirection.leftToRight,
       duration: Duration(milliseconds: 800),
       cover: TransitionCover(
@@ -205,7 +221,7 @@ Shared by every `ShaderTransition`:
 
 | Field | Type | Default |
 |---|---|---|
-| `duration` | `Duration` | `800 ms` diamond · `700 ms` circle · `600 ms` wipe |
+| `duration` | `Duration` | `800 ms` diamond · `700 ms` circle/clock/polygon · `600 ms` wipe/dissolve/bars · `400 ms` fade |
 | `cover` | `TransitionCover?` | `null` |
 | `invert` | `bool` | `false` |
 
@@ -213,31 +229,31 @@ Shared by every `ShaderTransition`:
 
 Per-type fields:
 
-| Type | Field | Type | Default |
+| Transition | Field | Type | Default |
 |---|---|---|---|
-| `DiamondTransition` | `cellSize` | `double` | `40.0` (px, min 1) |
+| `.diamond()` · `DiamondTransition` | `cellSize` | `double` | `40.0` (px, min 1) |
 | | `feather` | `double` | `0.0` |
 | | `direction` | `SweepDirection` | `topLeftToBottomRight` |
-| `CircleTransition` | `origin` | `Alignment` | `Alignment.center` |
+| `.circle()` · `CircleTransition` | `origin` | `Alignment` | `Alignment.center` |
 | | `feather` | `double` | `2.0` |
-| `WipeTransition` | `softness` | `double` | `4.0` (px; 0 = hard edge) |
+| `.wipe()` · `WipeTransition` | `softness` | `double` | `4.0` (px; 0 = hard edge) |
 | | `direction` | `SweepDirection` | `leftToRight` |
 | | `rotation` | `double` | `0.0` (radians) |
-| `ClockTransition` | `origin` | `Alignment` | `Alignment.center` |
+| `.clock()` · `ClockTransition` | `origin` | `Alignment` | `Alignment.center` |
 | | `sectors` | `int` | `1` |
 | | `rotation` | `double` | `0.0` |
 | | `feather` | `double` | `2.0` |
-| `PolygonTransition` | `origin` | `Alignment` | `Alignment.center` |
+| `.polygon()` · `PolygonTransition` | `origin` | `Alignment` | `Alignment.center` |
 | | `sides` | `int` | `6` (min 3) |
 | | `feather` | `double` | `2.0` |
 | | `rotation` | `double` | `0.0` |
-| `DissolveTransition` | `grain` | `double` | `8.0` |
-| `FadeShaderTransition` | _(shared fields only)_ | | |
-| `BarsTransition` | `count` | `int` | `6` |
+| `.dissolve()` · `DissolveTransition` | `grain` | `double` | `8.0` |
+| `.fade()` · `FadeShaderTransition` | _(shared fields only; `duration` defaults to `400 ms`)_ | | |
+| `.bars()` · `BarsTransition` | `count` | `int` | `6` |
 | | `softness` | `double` | `4.0` |
 | | `direction` | `SweepDirection` | `leftToRight` |
 
-`SweepDirection` values: `topLeftToBottomRight`, `topRightToBottomLeft`, `bottomLeftToTopRight`, `bottomRightToTopLeft`, `leftToRight`, `rightToLeft`, `topToBottom`, `bottomToTop`.
+`SweepDirection` values: `topLeftToBottomRight`, `topRightToBottomLeft`, `bottomLeftToTopRight`, `bottomRightToTopLeft`, `leftToRight`, `rightToLeft`, `topToBottom`, `bottomToTop`. Used by `DiamondTransition`, `WipeTransition`, and `BarsTransition`; the radial transitions (`CircleTransition`, `ClockTransition`, `PolygonTransition`) ignore it and use `origin` instead.
 
 ## With go_router / auto_route / app-wide
 
@@ -254,7 +270,7 @@ GoRoute(
     opaque: false,
     transitionDuration: const Duration(milliseconds: 800),
     transitionsBuilder: ShaderTransitionBuilders.create(
-      const DiamondTransition(direction: SweepDirection.leftToRight),
+      const ShaderTransition.diamond(direction: SweepDirection.leftToRight),
     ),
   ),
 ),
@@ -270,7 +286,7 @@ AutoRoute(
     opaque: false,
     pageBuilder: (_, __, ___) => child,
     transitionsBuilder: ShaderTransitionBuilders.create(
-      const CircleTransition(),
+      const ShaderTransition.circle(),
     ),
   ),
 ),
@@ -284,9 +300,11 @@ MaterialApp(
     pageTransitionsTheme: const PageTransitionsTheme(
       builders: {
         TargetPlatform.android: ShaderPageTransitionsBuilder(
-          WipeTransition(direction: SweepDirection.leftToRight),
+          ShaderTransition.wipe(direction: SweepDirection.leftToRight),
         ),
-        TargetPlatform.iOS: ShaderPageTransitionsBuilder(CircleTransition()),
+        TargetPlatform.iOS: ShaderPageTransitionsBuilder(
+          ShaderTransition.circle(),
+        ),
       },
     ),
   ),
@@ -302,7 +320,7 @@ routes — an `AnimatedSwitcher` analog. Key the children so swaps are detected:
 
 ```dart
 ShaderTransitionSwitcher(
-  transition: const CircleTransition(),
+  transition: const ShaderTransition.circle(),
   child: KeyedSubtree(
     key: ValueKey(index),
     child: pages[index],
@@ -321,7 +339,7 @@ already use:
 Navigator.of(context).push(
   ShaderPageRoute(
     page: const NextPage(),
-    transition: const WipeTransition(),
+    transition: const ShaderTransition.wipe(),
     onStart: () => audioPlayer.play(AssetSource('whoosh.mp3')),
   ),
 );
@@ -347,7 +365,9 @@ The `ShaderTransitions.{diamond,circle,wipe}(...)` convenience factories keep wo
 
 The core is `ShaderMask(blendMode: BlendMode.dstIn)` wrapping the incoming page — the shader writes alpha into `BlendMode.dstIn`, so where the shader's alpha is `0` the page is transparent and the outgoing route shows through, and where it's `1` the page is opaque.
 
-When `color != null` the widget owns **two** `FragmentShader` instances and composes a three-phase Stack:
+Once the animation settles (`animation.value >= 1.0`) the mask is dropped entirely and the raw page is painted. So a shader whose alpha lands a hair below `1.0` at full progress — dissolve grain, the clock/bars seams, a wipe's trailing edge — can never leave a translucent "ghost" of the outgoing page behind.
+
+When `cover != null` the widget owns **two** `FragmentShader` instances and composes a three-phase Stack:
 
 ```
 animation.value:  0 ─────── phase1End ───── phase2End ─────── 1
@@ -359,7 +379,7 @@ page wipe out     │   hidden    │   hidden     │░░░░░░░░�
 visible result:   outgoing →  cover     full cover     cover → new page
 ```
 
-`phase1End` and `phase2End` are derived from `transitionDuration` and `coverDuration`. With `coverDuration: Duration.zero`, phases 1 and 3 abut directly — a continuous cross-fade through the color.
+`phase1End` and `phase2End` are derived from `duration` and `cover.hold` (the hold is first clamped to ≤ 75% of `duration`, so each wipe always keeps at least 12.5% of the timeline). With `cover.hold: Duration.zero`, phases 1 and 3 abut directly — a continuous cross-fade through the color.
 
 ## Used by
 

@@ -4,7 +4,7 @@ import 'package:shader_transitions/shader_transitions.dart';
 /// The target screen pushed by each gallery card.
 ///
 /// Shows details about the active transition and lets the user pop back
-/// (which plays the reverse animation) or push another layer forward.
+/// (which plays the reverse animation).
 class DestinationScreen extends StatelessWidget {
   const DestinationScreen({super.key, required this.transition});
 
@@ -152,23 +152,6 @@ class DestinationScreen extends StatelessWidget {
 
               const Spacer(),
 
-              // Push another layer to show stacking works
-              OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).push(
-                  ShaderPageRoute(
-                    page: DestinationScreen(transition: transition),
-                    transition: transition,
-                  ),
-                ),
-                icon: const Icon(Icons.layers_outlined),
-                label: const Text('Push again (stack test)'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: accent,
-                  side: BorderSide(color: accent),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-              ),
-              const SizedBox(height: 12),
               FilledButton.icon(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.arrow_back),

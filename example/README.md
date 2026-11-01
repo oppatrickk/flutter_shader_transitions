@@ -2,7 +2,7 @@
 
 A live demo of every transition in the [`shader_transitions`](https://pub.dev/packages/shader_transitions) package, with sliders and color swatches that let you configure each option before triggering the transition.
 
-![gallery](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/hero.gif)
+<!-- Demo GIF (gallery) — record via ../scripts/record-demos.md, then re-add: ![gallery](https://raw.githubusercontent.com/oppatrickk/flutter_shader_transitions/main/screenshots/hero.gif) -->
 
 ## Run it
 
@@ -36,8 +36,8 @@ The **Test transition** button at the bottom pushes a `DestinationScreen` with t
 ## Key files
 
 - [`lib/main.dart`](lib/main.dart) — `ShaderTransitions.preload()` before `runApp`, then mounts `GalleryScreen`.
-- [`lib/screens/gallery_screen.dart`](lib/screens/gallery_screen.dart) — type list, layout switching, the `TransitionEditor` widget that builds each `ShaderTransitionConfig`.
-- [`lib/screens/destination_screen.dart`](lib/screens/destination_screen.dart) — the page each transition pushes into. Shows the live config and includes a "Push again" button so you can verify stacking.
+- [`lib/screens/gallery_screen.dart`](lib/screens/gallery_screen.dart) — type list, layout switching, the `TransitionEditor` widget that builds each `ShaderTransition` (e.g. `ShaderTransition.diamond(...)`, `ShaderTransition.wipe(...)`).
+- [`lib/screens/destination_screen.dart`](lib/screens/destination_screen.dart) — the page each transition pushes into. Shows the live config and a button to pop back (playing the reverse animation).
 
 ## Screenshots
 

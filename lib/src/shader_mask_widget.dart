@@ -312,6 +312,15 @@ class _ShaderMaskTransitionState extends State<ShaderMaskTransition> {
     return AnimatedBuilder(
       animation: widget.animation,
       builder: (context, child) {
+        // Once the animation is fully settled, bypass the mask entirely and
+        // paint the raw page. Shader alpha masks can't guarantee a perfect
+        // 1.0 across every pixel at progress 1.0 — dissolve grains near
+        // threshold 1, the clock/bars seams, and the wipe's trailing edge all
+        // settle a hair below full opacity. With `opaque: false` beneath, those
+        // sub-1.0 pixels leak the outgoing page as a permanent "leftover".
+        // Returning the child unmasked guarantees a pixel-perfect page at rest.
+        if (widget.animation.value >= 1.0) return child!;
+
         if (cover == null || _coverShader == null) {
           return _maskedLayer(
             shader: _pageShader!,

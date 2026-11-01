@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- Named constructors on `ShaderTransition` for all eight transitions:
+  `ShaderTransition.diamond()`, `.circle()`, `.wipe()`, `.clock()`,
+  `.polygon()`, `.dissolve()`, `.fade()`, `.bars()`. Each redirects to the
+  existing concrete class (same parameters and defaults), so typing
+  `ShaderTransition.` lists every transition, and Dart 3.10+ apps can write
+  `transition: .diamond()`.
+- README, library docs, and the example gallery use the named constructors.
+- Package tests added for the constructors.
+- No breaking changes — the concrete classes and `ShaderTransitions`
+  factories are unchanged.
+
 ## 1.0.0 — Stable
 
 API freeze. No code changes vs 0.3.2 — this marks the sealed

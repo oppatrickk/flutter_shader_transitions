@@ -4,9 +4,9 @@ import 'package:flutter/painting.dart' show Alignment;
 
 /// The direction in which a directional transition sweeps across the screen.
 ///
-/// Applies to [DiamondTransition] and [WipeTransition]. Ignored by
-/// [CircleTransition], which is radial and uses [CircleTransition.origin]
-/// instead.
+/// Applies to [DiamondTransition], [WipeTransition], and [BarsTransition].
+/// Ignored by the radial transitions ([CircleTransition], [ClockTransition],
+/// [PolygonTransition]), which use their `origin` instead.
 enum SweepDirection {
   /// Diagonal sweep starting at the top-left corner, ending bottom-right.
   topLeftToBottomRight,
@@ -94,7 +94,19 @@ class TransitionCover {
 
 /// A shader-backed screen transition.
 ///
-/// This is a sealed hierarchy — instantiate one of the concrete subtypes:
+/// Create one with a named constructor — `ShaderTransition.diamond()`,
+/// `.circle()`, `.wipe()`, `.clock()`, `.polygon()`, `.dissolve()`,
+/// `.fade()`, or `.bars()`:
+///
+/// ```dart
+/// ShaderPageRoute(
+///   page: const NextPage(),
+///   transition: const ShaderTransition.circle(origin: Alignment.bottomRight),
+/// )
+/// ```
+///
+/// Each one returns the matching concrete subtype of this sealed hierarchy,
+/// which you can also construct directly:
 ///
 /// - [DiamondTransition] — a sweeping grid of diamond cells.
 /// - [CircleTransition] — a circular iris reveal from [CircleTransition.origin].
@@ -106,8 +118,9 @@ class TransitionCover {
 /// - [BarsTransition] — a venetian-blind reveal.
 ///
 /// Every transition shares [duration], an optional [cover], and an [invert]
-/// flag. Pass one to [ShaderPageRoute], [ShaderTransitions] factories, or
-/// [ShaderTransitionBuilders.create].
+/// flag. Pass one to [ShaderPageRoute], [ShaderTransitions] factories,
+/// [ShaderTransitionBuilders.create], [ShaderPageTransitionsBuilder], or
+/// [ShaderTransitionSwitcher].
 sealed class ShaderTransition {
   /// Total animation time, used unchanged for both push and pop.
   ///
@@ -130,6 +143,94 @@ sealed class ShaderTransition {
     this.cover,
     this.invert = false,
   });
+
+  // Named constructors redirect to the concrete subtypes, so omitted
+  // arguments take that subtype's defaults (redirecting factories can't
+  // declare their own).
+
+  /// A sweeping grid of diamond cells. Same parameters and defaults as
+  /// [DiamondTransition.new].
+  const factory ShaderTransition.diamond({
+    double cellSize,
+    double feather,
+    SweepDirection direction,
+    Duration duration,
+    TransitionCover? cover,
+    bool invert,
+  }) = DiamondTransition;
+
+  /// A circular iris reveal. Same parameters and defaults as
+  /// [CircleTransition.new].
+  const factory ShaderTransition.circle({
+    Alignment origin,
+    double feather,
+    Duration duration,
+    TransitionCover? cover,
+    bool invert,
+  }) = CircleTransition;
+
+  /// A straight feathered edge. Same parameters and defaults as
+  /// [WipeTransition.new].
+  const factory ShaderTransition.wipe({
+    double softness,
+    SweepDirection direction,
+    double rotation,
+    Duration duration,
+    TransitionCover? cover,
+    bool invert,
+  }) = WipeTransition;
+
+  /// A radial clock-hand sweep. Same parameters and defaults as
+  /// [ClockTransition.new].
+  const factory ShaderTransition.clock({
+    Alignment origin,
+    int sectors,
+    double rotation,
+    double feather,
+    Duration duration,
+    TransitionCover? cover,
+    bool invert,
+  }) = ClockTransition;
+
+  /// A regular-polygon iris. Same parameters and defaults as
+  /// [PolygonTransition.new].
+  const factory ShaderTransition.polygon({
+    Alignment origin,
+    int sides,
+    double feather,
+    double rotation,
+    Duration duration,
+    TransitionCover? cover,
+    bool invert,
+  }) = PolygonTransition;
+
+  /// A noise-grain dissolve. Same parameters and defaults as
+  /// [DissolveTransition.new].
+  const factory ShaderTransition.dissolve({
+    double grain,
+    Duration duration,
+    TransitionCover? cover,
+    bool invert,
+  }) = DissolveTransition;
+
+  /// A uniform cross-fade. Same parameters and defaults as
+  /// [FadeShaderTransition.new].
+  const factory ShaderTransition.fade({
+    Duration duration,
+    TransitionCover? cover,
+    bool invert,
+  }) = FadeShaderTransition;
+
+  /// A venetian-blind reveal. Same parameters and defaults as
+  /// [BarsTransition.new].
+  const factory ShaderTransition.bars({
+    int count,
+    double softness,
+    SweepDirection direction,
+    Duration duration,
+    TransitionCover? cover,
+    bool invert,
+  }) = BarsTransition;
 
   /// The [ShaderRegistry] key (and `.frag` basename) backing this transition.
   String get shaderKey;

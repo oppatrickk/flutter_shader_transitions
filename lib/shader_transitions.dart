@@ -11,7 +11,16 @@
 ///    }
 ///    ```
 ///
-/// 2. **Push a route**:
+/// 2. **Push a route** with any of the eight transitions:
+///    ```dart
+///    Navigator.of(context).push(
+///      ShaderPageRoute(
+///        page: const NextPage(),
+///        transition: const ShaderTransition.polygon(sides: 3),
+///      ),
+///    );
+///    ```
+///    Or use a one-call shortcut for diamond, circle, and wipe:
 ///    ```dart
 ///    Navigator.of(context).push(
 ///      ShaderTransitions.diamond(page: const NextPage()),
